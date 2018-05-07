@@ -6,9 +6,10 @@ import matplotlib.pyplot as plt
 import numpy as np
 import tensorflow as tf
 
+from getpass import getuser
 from datahandler import DataHandler
-from models_estimator import SimpleCRNN as Model
-from models_estimator import input_fn
+from models import SimpleCRNN as Model
+from models import input_fn
 from utils import plot_confusion_matrix, determine_data_dimensions
 from shutil import rmtree
 from sklearn.decomposition import PCA
@@ -16,24 +17,30 @@ from sklearn.mixture import GaussianMixture
 
 verbose = True
 simulated_data = False
-n2rem_data = True # control: rem, experimental: n2
-model_memory = True
-train_model = False
+n2rem_data = False  # control: rem, experimental: n2
+model_memory = False
+train_model = True
 evaluate_model = False
-export_savedmodel = True
+export_savedmodel = False
 activation_maximization = False
 std_peak_analysis = False
 visualize_std = False
 gan_activation_maximization = False
-logdir = './tf_logs/'
-ckptdir = logdir + 'model/'
-# Define folder where data is located
-if simulated_data:
-    data_folder = '/home/rasmus/Desktop/shhs_subset/simulated_data/'
-elif n2rem_data:
-    data_folder = '/home/rasmus/Desktop/SSC/processed_data/'
-else:
-    data_folder = '/home/rasmus/Desktop/shhs_subset/processed_data/'
+user = getuser()
+if user == 'rasmus':
+    logdir = './tf_logs/'
+    ckptdir = logdir + 'model/'
+    # Define folder where data is located
+    if simulated_data:
+        data_folder = '/home/rasmus/Desktop/shhs_subset/simulated_data/'
+    elif n2rem_data:
+        data_folder = '/home/rasmus/Desktop/SSC/processed_data/'
+    else:
+        data_folder = '/home/rasmus/Desktop/shhs_subset/processed_data/'
+elif user == 'rmth':
+    logdir = '/scratch/users/rmth/tf_logs/'
+    ckptdir = logdir + 'model/'
+    data_folder = '/scratch/users/rmth/processed_shhs_data/'
 
 if verbose:
     tf.logging.set_verbosity(tf.logging.INFO)
