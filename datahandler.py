@@ -188,7 +188,7 @@ class DataHandler(object):
             for i in range(imax):
                 batch = [self.partition[k] for k in idx[i*self.batch_size:(i+1)*self.batch_size]]
                 X, y = self.__batch_generation(batch)
-                print(y)
+                #print(y)
                 yield X, y
 
 
