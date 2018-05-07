@@ -56,7 +56,7 @@ def load_edf_file(filename, channels_to_load, epoch_duration=5):
     fss = f.getSampleFrequencies()
     n = f.getNSamples()[2]
     fs = fss[channels_to_load[0]]
-    epoch_samples = epoch_duration * fs
+    epoch_samples = int(epoch_duration * fs)
     n_epochs = n // epoch_samples
     sigbufs = np.zeros((len(channels_to_load), n_epochs, epoch_samples))
 

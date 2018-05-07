@@ -8,13 +8,14 @@ import datetime
 rescale_mode = 'soft'
 data_folder = '/scratch/PI/mignot/nsrr/shhs/polysomnography/edfs/shhs1/'
 IDs = listdir(data_folder)
-IDs = IDs[0]
 channels_to_load = [2, 7]
-output_folder = '/home/users/rmth/processed_shhs_data'
+output_folder = '/home/users/rmth/processed_shhs_data/'
 
 for counter, ID in enumerate(IDs):
     print('Load, filtering, organizing: ' + str(ID) + ' (number ' + str(counter+1) + ' of ' + str(len(IDs)) + ').')
+    if counter > 2: continue
     filename = data_folder + ID
+    print(filename)
     data, filter = utils.load_edf_file(filename,
                                        channels_to_load,
                                        epoch_duration=5)
@@ -24,14 +25,10 @@ for counter, ID in enumerate(IDs):
     output_file_name = output_folder +  ID[:-4] + ".hpf5"
     with h5py.File(output_file_name, "w") as f:
         x = data['sigbufs']
-        if simulated_data:
-            x = np.random.normal(0, 1, x.shape)
-            if group[counter] == 1:
-                x = utils.add_known_complex(x, data['fs'])
         x = utils.rescale(x, data['fs'], rescale_mode)
         dset = f.create_dataset("x", data=x, chunks=True)
         f['fs'] = data['fs']
-        f["group"] = group[counter]
+        #f["group"] = group[counter]
 
 print("All files processed.")
 now = datetime.datetime.now()
