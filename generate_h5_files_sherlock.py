@@ -17,24 +17,24 @@ output_folder = '/scratch/users/rmth/processed_shhs_data/'
 
 for counter, ID in enumerate(IDs):
     try:
-    	print('Load, filtering, organizing: ' + str(ID) + ' (number ' + str(counter+1) + ' of ' + str(len(IDs)) + ').')
+        print('Load, filtering, organizing: ' + str(ID) + ' (number ' + str(counter+1) + ' of ' + str(len(IDs)) + ').')
     
-    	filename = data_folder + 'shhs1-' + str(ID) + '.edf'
-    	print(filename)
-    	data, filter = utils.load_edf_file(filename,
+        filename = data_folder + 'shhs1-' + str(ID) + '.edf'
+        print(filename)
+        data, filter = utils.load_edf_file(filename,
                                        channels_to_load,
                                        epoch_duration=5)
-    	if counter == 0:
-        	n_chans, n_epochs, n_epoch_samples = data["sigbufs"].shape
-    	output_file_name = output_folder + 'shhs1-' + str(ID) + ".hpf5"
-    	with h5py.File(output_file_name, "w") as f:
-        	x = data['sigbufs']
-        	x = utils.rescale(x, data['fs'], rescale_mode)
-        	dset = f.create_dataset("x", data=x, chunks=True)
-        	f['fs'] = data['fs']
-        	f['group'] = int(group[counter])
-    except: 
-	print('Error happend while processing: {}'.format(str(filename))
+        if counter == 0:
+            n_chans, n_epochs, n_epoch_samples = data["sigbufs"].shape
+        output_file_name = output_folder + 'shhs1-' + str(ID) + ".hpf5"
+        with h5py.File(output_file_name, "w") as f:
+            x = data['sigbufs']
+            x = utils.rescale(x, data['fs'], rescale_mode)
+            dset = f.create_dataset("x", data=x, chunks=True)
+            f['fs'] = data['fs']
+            f['group'] = int(group[counter])
+    except:
+        print('Error happend while processing: {}'.format(str(filename)))
 
 print("All files processed.")
 now = datetime.datetime.now()
