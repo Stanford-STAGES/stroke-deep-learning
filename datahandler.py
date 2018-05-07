@@ -27,12 +27,15 @@ class DataHandler(object):
         cls.n_epochs = {}
         cls.current_epoch = {}
         for i,id in enumerate(cls.ids):
-            with h5py.File(cls.data_folder + id + '.hpf5', "r") as f:
-                cls.labels[id] = int(f["group"][()])
-                cls.n_epochs[id] = f['x'].shape[1]
-                cls.epoch_order[id] = np.arange(0,cls.n_epochs[id]-1)
-                cls.current_epoch[id] = 0
-
+            try:
+                with h5py.File(cls.data_folder + id + '.hpf5', "r") as f:
+                    cls.labels[id] = int(f["group"][()])
+                    cls.n_epochs[id] = f['x'].shape[1]
+                    cls.epoch_order[id] = np.arange(0,cls.n_epochs[id]-1)
+                    cls.current_epoch[id] = 0
+            except:
+                print('Something is wrong with {}'.format(id))
+                
         # Assign each ID to testing, training og validaiton partition
         y = [v for v in cls.labels.values()]
         ids = [k for k in cls.labels.keys()]
