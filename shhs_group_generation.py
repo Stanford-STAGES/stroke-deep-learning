@@ -1,5 +1,4 @@
 import pandas as pd
-import matplotlib.pyplot as plt
 import numpy as np
 summary_file = '/home/rasmus/Desktop/shhs-cvd-summary-dataset-0.13.0.csv'
 
@@ -34,4 +33,8 @@ IDs = np.concatenate([control_ids,
 group = np.concatenate([np.zeros(shape=len(control_ids)),
                         np.ones(shape=len(experimental_ids))])
 
-np.savetxt("IDs.csv", [IDs, group], delimiter=",")
+out = pd.DataFrame()
+out['IDs'] = IDs
+out['group'] = group
+
+out.to_csv('./IDs.csv')

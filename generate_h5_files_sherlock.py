@@ -3,32 +3,33 @@ import utils
 import sys
 import h5py
 import numpy as np
+import pandas as pd
 import datetime
 
 rescale_mode = 'soft'
 data_folder = '/scratch/PI/mignot/nsrr/shhs/polysomnography/edfs/shhs1/'
-IDs = listdir(data_folder)
+df = pd.read_csv('IDs.csv')
+IDs = np.asarray(df['IDs'])
+group = np.asarray(df['group'])
 channels_to_load = [2, 7]
 output_folder = '/home/users/rmth/processed_shhs_data/'
 
 for counter, ID in enumerate(IDs):
     print('Load, filtering, organizing: ' + str(ID) + ' (number ' + str(counter+1) + ' of ' + str(len(IDs)) + ').')
     if counter > 2: continue
-    filename = data_folder + ID
-    print(filename)
+    filename = data_folder + 'shhs1-' + str(ID) + '.EDF'
     data, filter = utils.load_edf_file(filename,
                                        channels_to_load,
                                        epoch_duration=5)
-
     if counter == 0:
         n_chans, n_epochs, n_epoch_samples = data["sigbufs"].shape
-    output_file_name = output_folder +  ID[:-4] + ".hpf5"
+    output_file_name = output_folder + 'shhs1-' + str(ID) + ".hpf5"
     with h5py.File(output_file_name, "w") as f:
         x = data['sigbufs']
         x = utils.rescale(x, data['fs'], rescale_mode)
         dset = f.create_dataset("x", data=x, chunks=True)
         f['fs'] = data['fs']
-        #f["group"] = group[counter]
+        f['group'] = int(group[counter])
 
 print("All files processed.")
 now = datetime.datetime.now()
