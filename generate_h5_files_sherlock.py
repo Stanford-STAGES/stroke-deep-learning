@@ -47,7 +47,4 @@ with open(output_folder + "conversion.log", "w") as log:
     log.write("\n\t   High cut: " + str(filter["highcut"]))
     log.write("\n Rejection of epochs based on sum of Pxx above 1000.)")
     log.write("\n Signal has been scaled by: " + str(rescale_mode))
-    if simulated_data:
-        log.write("\nSimulated data... All stroke subjects have had known element added.")
-
 sys.exit()
