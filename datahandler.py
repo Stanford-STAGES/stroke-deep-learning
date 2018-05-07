@@ -35,7 +35,7 @@ class DataHandler(object):
                     cls.current_epoch[id] = 0
             except:
                 print('Something is wrong with {}'.format(id))
-                
+
         # Assign each ID to testing, training og validaiton partition
         y = [v for v in cls.labels.values()]
         ids = [k for k in cls.labels.keys()]
@@ -88,9 +88,17 @@ class DataHandler(object):
     def __init__(self, subset):
         self.subset = subset
         self.partition = self.partitions[self.subset]
+
+        idx = np.arange(len(self.partition))
+        ids = [self.partition[k] for k in idx]
+        lab = np.asarray([int(self.labels[k]) for k in ids])
+        self.exp = idx[lab == 1]
+        self.con = idx[lab == 0]
+        self.n_exp = len(self.exp)//4
+        self.n_con = len(self.con)//4
+        self.smallest = np.min([self.n_exp, self.n_con])
+
         self.batch_size = self.batch_sizes[subset]
-        if subset == 'train' and self.batch_size != 16:
-            print('Warning: batch-size different from 16 can give uneven batches due to exploration order.')
         self.n_classes = 2
         pass
 
@@ -124,10 +132,14 @@ class DataHandler(object):
         return data, self.labels[id]
 
     def __get_exploration_order(self):
-        idx = np.arange(len(self.partition))
-        if self.subset == 'train':
-                np.random.shuffle(idx)
-        return idx
+        np.random.shuffle(self.exp)
+        np.random.shuffle(self.con)
+        idx = np.zeros(self.smallest*8)
+        for i in range(self.smallest):
+            c = np.concatenate([self.exp[i*4:i*4+4],self.con[i*4:i*4+4]])
+            np.random.shuffle(c)
+            idx[i*8:i*8+8] = c
+        return idx.astype(int)
 
     def __sparsify(self, y):
         return np.array([[1 if y[i] == j else 0 for j in range(self.n_classes)]
@@ -176,7 +188,7 @@ class DataHandler(object):
             for i in range(imax):
                 batch = [self.partition[k] for k in idx[i*self.batch_size:(i+1)*self.batch_size]]
                 X, y = self.__batch_generation(batch)
-                #print(y)
+                print(y)
                 yield X, y
 
 

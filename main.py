@@ -17,7 +17,7 @@ from sklearn.mixture import GaussianMixture
 
 verbose = True
 simulated_data = False
-n2rem_data = False  # control: rem, experimental: n2
+n2rem_data = True  # control: rem, experimental: n2
 model_memory = False
 train_model = True
 evaluate_model = False
