@@ -169,7 +169,7 @@ class SimpleCRNN:
 
             export_outputs = {'out': tf.estimator.export.PredictOutput(predictions)}
 
-
+        '''
         with tf.name_scope('activation_maximization'):
             X_p = tf.get_variable('X_p',
                 shape = [self.n_classes, self.n_channels, self.n_time_steps, 1, self.n_sub_epoch_samples],
@@ -214,7 +214,7 @@ class SimpleCRNN:
             tf.add_to_collection('prototype', X_mean)
             tf.add_to_collection('prototype', Spectra)
             tf.add_to_collection('prototype', ypsilon_p)
-
+        '''
 
         if mode == tf.estimator.ModeKeys.PREDICT:
             return tf.estimator.EstimatorSpec(mode=mode,
