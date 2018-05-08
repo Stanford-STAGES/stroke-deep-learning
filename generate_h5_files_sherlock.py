@@ -23,7 +23,7 @@ for counter, ID in enumerate(IDs):
         print(filename)
         data, filter = utils.load_edf_file(filename,
                                        channels_to_load,
-                                       epoch_duration=5)
+                                       epoch_duration=5*60)
         if counter == 0:
             n_chans, n_epochs, n_epoch_samples = data["sigbufs"].shape
         output_file_name = output_folder + 'shhs1-' + str(ID) + ".hpf5"
