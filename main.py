@@ -17,7 +17,7 @@ from sklearn.mixture import GaussianMixture
 
 verbose = True
 simulated_data = False
-n2rem_data = True  # control: rem, experimental: n2
+n2rem_data = False  # control: rem, experimental: n2
 model_memory = False
 train_model = True
 evaluate_model = False
@@ -53,7 +53,7 @@ if not os.path.exists(logdir):
 
 params= {'logdir': logdir,
          'n_epoch_samples': n_epoch_samples,
-         'time_steps': 1,
+         'time_steps': 5*2*6,
          'fs': 128,
          'n_filters': 512,
          'temporal_kernel_size': 3,
@@ -86,7 +86,7 @@ params= {'logdir': logdir,
          'pool_stride': 2,
          'n_layers': 6,
          'rnn_layer': True,
-         'dense_layer': False,
+         'dense_layer': True,
          }
 
 if params['n_epoch_samples'] % params['time_steps'] != 0:
