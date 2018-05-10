@@ -18,9 +18,9 @@ from sklearn.mixture import GaussianMixture
 verbose = True
 simulated_data = False
 n2rem_data = False  # control: rem, experimental: n2
-model_memory = False
-train_model = True
-evaluate_model = False
+model_memory = True
+train_model = False
+evaluate_model = True
 export_savedmodel = False
 activation_maximization = False
 std_peak_analysis = False
@@ -60,8 +60,8 @@ params={'logdir': logdir,
          'temporal_kernel_size': 3,
          'n_channels': n_channels,
          'pooling_size': 3,
-         'rnn_size': 32,
-         'n_units_dense': 64,
+         'rnn_size': 64,
+         'n_units_dense': 128,
          'n_classes': 2,
          'batch_norm': True,
          'activation': tf.nn.elu,
