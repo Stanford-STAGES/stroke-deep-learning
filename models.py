@@ -28,6 +28,8 @@ class SimpleCRNN:
         self.n_layers = params['n_layers']
         self.rnn_layer = params['rnn_layer']
         self.dense_layer = params['dense_layer']
+        self.one_output_per_epoch = params['one_output_per_epoch']
+        self.training_hook_n_iter = params['training_hook_n_iter']
 
     def __conv_layer(self, input, n_filters):
         conv = tf.layers.conv3d(inputs=input,
@@ -142,7 +144,10 @@ class SimpleCRNN:
             X = tf.convert_to_tensor(xlist)
             X = tf.transpose(X, [1,2,0,3,4])
             if self.verbose_shapes: print('X: {}'.format(X.shape))
+
         extracted_features = self.__network(input=X, reuse=reuse)
+        if self.one_output_per_epoch:
+            extracted_features = tf.contrib.layers.flatten(extracted_features)
 
         with tf.name_scope('classifier_output'):
             logits = self.__output_layer(input = extracted_features, reuse=reuse)
@@ -150,22 +155,35 @@ class SimpleCRNN:
             if self.verbose_shapes: print('logits: {}'.format(logits.shape))
             self.verbose_shapes = False
 
-            classes = tf.argmax(input=logits, axis=2)
+            if self.one_output_per_epoch:
+                classes = tf.argmax(input=logits, axis=1)
+            else:
+                classes = tf.argmax(input=logits, axis=2)
             probabilities = tf.nn.softmax(logits, name="softmax_tensor")
 
-            ylist = [logits[:, time, 0] for time in range(self.n_time_steps)]
-            control_sensitivity = self.__sensitivity_analysis(xlist, ylist)
+            predictions = {}
+            predictions["classes"] = classes
+            predictions["probabilities"] = probabilities
+            predictions["features"] = extracted_features
 
-            ylist = [logits[:, time, 1] for time in range(self.n_time_steps)]
-            experimental_sensitivity = self.__sensitivity_analysis(xlist, ylist)
+            if self.one_output_per_epoch::
+                l = tf.expand_dims(logits, 1)
 
-            predictions = {
-                "classes": classes,
-                "probabilities": probabilities,
-                "features": extracted_features,
-                "experimental_sensitivity": experimental_sensitivity,
-                "control_sensitivity": control_sensitivity
-            }
+                ylist = [l[:, time, 0] for time in range(1)]
+                control_sensitivity = self.__sensitivity_analysis(xlist, ylist)
+                ylist = [l[:, time, 1] for time in range(1)]
+                experimental_sensitivity = self.__sensitivity_analysis(xlist, ylist)
+
+                predictions["experimental_sensitivity"] = experimental_sensitivity
+                predictions["control_sensitivity"] = control_sensitivity
+            else:
+                ylist = [logits[:, time, 0] for time in range(self.n_time_steps)]
+                control_sensitivity = self.__sensitivity_analysis(xlist, ylist)
+
+                ylist = [logits[:, time, 1] for time in range(self.n_time_steps)]
+                experimental_sensitivity = self.__sensitivity_analysis(xlist, ylist)
+                predictions["experimental_sensitivity"] = experimental_sensitivity
+                predictions["control_sensitivity"] = control_sensitivity
 
             export_outputs = {'out': tf.estimator.export.PredictOutput(predictions)}
 
@@ -222,10 +240,14 @@ class SimpleCRNN:
                                               export_outputs=export_outputs)
 
         with tf.name_scope('classifier_evaluation'):
-            y = tf.reshape(tf.tile(labels, (1, self.n_time_steps)), (-1, 2))
-            loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits_v2(logits=tf.reshape(logits,[-1,2]), labels=y))
-
-            # todo: check why extra nodes are added
+            if not self.one_output_per_epoch:
+                y = tf.reshape(tf.tile(labels, (1, self.n_time_steps)), (-1, 2))
+                loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits_v2(logits=tf.reshape(logits,[-1,2]), labels=y))
+                true_classes = tf.argmax(y, 1)
+            else:
+                y = labels
+                true_classes = tf.argmax(y)
+                loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits_v2(logits=logits, labels=labels))
 
             l2 = self.regularization * sum(
                 tf.nn.l2_loss(tf_var)
@@ -234,8 +256,6 @@ class SimpleCRNN:
             )
             loss += l2
 
-
-            true_classes = tf.argmax(y,1)
             est_classes = tf.reshape(predictions['classes'],[-1])
             correct_prediction = tf.equal(est_classes, true_classes)
             accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
@@ -252,11 +272,13 @@ class SimpleCRNN:
                               'summary': summary}
 
             def formatter(d):
-                return 'Mode: {}, Step: {:04}, loss: {:.4f}, accuracy: {:.2f}'.format(mode, d['step'], d['loss'],
+                return 'Mode: {}, Step: {:04}, loss: {:.4f}, accuracy: {:.2f}'.format(mode,
+                                                                                      d['step'],
+                                                                                      d['loss'],
                                                                                       d['accuracy'])
 
             training_hook = tf.train.LoggingTensorHook(
-                tensors=tensors_to_log, every_n_iter=5, formatter=formatter)
+                tensors=tensors_to_log, every_n_iter=self.training_hook_n_iter, formatter=formatter)
 
         # Configure the Training Op (for TRAIN mode)
         if mode == tf.estimator.ModeKeys.TRAIN:

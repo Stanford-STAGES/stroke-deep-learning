@@ -2,9 +2,15 @@ import numpy as np
 from scipy.signal import butter, filtfilt, welch
 from scipy.interpolate import interp1d
 import pyedflib
-import matplotlib.pyplot as plt
-import itertools
 import pandas as pd
+from sklearn.preprocessing import StandardScaler
+from scipy.signal import gaussian, sawtooth
+from numpy.random import randint as randi
+from numpy.random import normal as randn
+import json
+
+import warnings
+warnings.simplefilter(action='ignore', category=FutureWarning)
 
 def butter_bandpass(lowcut, highcut, fs, order=5):
     nyq = 0.5 * fs
@@ -18,19 +24,25 @@ def butter_bandpass_filter(data, lowcut, highcut, fs, order=4):
     y = filtfilt(b, a, data)
     return y
 
-def load_edf_file_ssc(filename, channels_to_load):
+def load_edf_file(filename, channels_to_load, cohort, channel_alias):
     f = pyedflib.EdfReader(filename)
     labels = f.getSignalLabels()
-    contained = {x: i for (i,x) in enumerate(labels) if x in channels_to_load.keys()}
+    contained = {channel_alias[e]: i for (i, e) in enumerate(labels) if e in channel_alias}
 
-    if not contained or len(contained) != 6:
+    if not contained or len(contained) != len(channels_to_load):
+        print(labels)
         print(contained)
         return -1
 
     fss = f.getSampleFrequencies()
-    fs = fss[contained['C3-A2']]
-    n = f.getNSamples()[contained['C3-A2']]
+    if cohort == 'SSC':
+        fs = fss[contained['C3']]
+        n = f.getNSamples()[contained['C3']]
+    elif cohort == 'SHHS' or cohort == 'SHHS-Sherlock':
+        fs = fss[contained['eeg1']]
+        n = f.getNSamples()[contained['eeg2']]
     X = np.zeros((len(channels_to_load), n))
+
     lowcut = .3
     highcut = 40.
     for chan_name, chan_idx_in_file in contained.items():
@@ -42,69 +54,28 @@ def load_edf_file_ssc(filename, channels_to_load):
             F = interp1d(t, x, kind='linear', fill_value = 'extrapolate')
             x = F(time)
         X[channels_to_load[chan_name],:] = butter_bandpass_filter(x, lowcut, highcut, fs)
-
-    #labels = [labels[x] for x in chan_number]
     data = {'x': X, 'fs': fs, 'labels': labels}
     return data
 
-def load_edf_file(filename, channels_to_load, epoch_duration=5):
-    # todo: gain correction?!
-    f = pyedflib.EdfReader(filename)
-    labels = f.getSignalLabels()
-    #n_sigs = f.signals_in_file
-    #channels_to_load = np.arange(0, n_sigs)  # [2,3,4,5,6,7]
-    fss = f.getSampleFrequencies()
-    n = f.getNSamples()[2]
-    fs = fss[channels_to_load[0]]
-    epoch_samples = int(epoch_duration * fs)
-    n_epochs = n // epoch_samples
-    sigbufs = np.zeros((len(channels_to_load), n_epochs, epoch_samples))
-
-    time = np.arange(0, epoch_duration, 1 / fs)
-    lowcut = .3
-    highcut = 40.
-    for i, j in enumerate(channels_to_load):
-        x = f.readSignal(j)
-        if fss[j] != fs:
-            #x = resample(x, n, np.arange(0, len(x) / fss[j], 1 / fss[j]))
-            t = np.arange(0, len(x) / fss[j], 1 / fss[j])
-            F = interp1d(t,x,kind='linear')
-            x = F(time)
-        if i in channels_to_load:
-            x = butter_bandpass_filter(x, lowcut, highcut, fs)
-
-        sigbufs[i, :, :] = np.asarray(list(zip(*[iter(x)] * epoch_samples)))
-
-        #vals = []
-        #accept = np.zeros((n_epochs))
-        reject = []
-        for j in range(0,n_epochs):
-            fxx, Pxx = welch(sigbufs[i,j,:], fs=fs)
-            s = np.sum(Pxx)
-            if s > 2000: #s > 1
-                reject.append(j)
-        #print(accept==1)
-        #tmp = sigbufs[:, accept == 1, :]
-        #sigbufs = tmp
-        #vals.append(np.sum(Pxx))
-        #print(reject)
-        #import matplotlib.pyplot as plt
-        #x = np.asarray(vals)
-        #n, bins, patches = plt.hist(x, bins=100, facecolor='blue', alpha=0.5)
-        #plt.title(str(np.median(vals)))
-        #plt.show()
-        #sys.exit()
-    #print(len(reject))
+def reject_noise_epochs(sigbufs, fs):
+    # todo: implement properly
+    print('Implement utils.reject_noise_epochs...')
+    return -1
+    i = 1
+    n_epochs = 1
+    reject = []
+    for j in range(0,n_epochs):
+        fxx, Pxx = welch(sigbufs[i,j,:], fs=fs)
+        s = np.sum(Pxx)
+        if s > 2000:
+            reject.append(j)
     if len(reject) != 0:
         reject = np.unique(np.asarray(reject))
         mask = np.ones((n_epochs), dtype=bool)
         mask[reject] = False
         tmp = sigbufs[:, mask, :]
         sigbufs = tmp
-    filter = {"type": "butter_bandpass", "lowcut": lowcut, "highcut": highcut}
-    labels = [labels[x] for x in channels_to_load]
-    data = {'sigbufs': sigbufs, 'fs': fs, 'labels': labels}
-    return data, filter
+    return sigbufs
 
 def load_hypnogram_file(filename):
     with open(filename, 'r') as f:
@@ -114,38 +85,17 @@ def load_hypnogram_file(filename):
         hyp = hyp.astype(int)
     return hyp
 
-def visualize_epoch(data, epoch = 1):
-    '''use with load_edf_file:
-       data = utils.load_edf_file(filename, channels_to_load)
-       utils.visualize_epoch(data, epoch = 300)
-       '''
-    time = np.arange(0, 30, 1 / data['fs'])
-    X = data['sigbufs']
-    labels = data['labels']
-    (n_chans, n_epochs, n_samples) = X.shape
-    fig, axs = plt.subplots(nrows=n_chans, figsize=(6, 10))
-    for i, j in enumerate(axs):
-        j.plot(time, X[i, epoch, :])
-        j.set_title(labels[i])
-        j.autoscale(enable=True, axis='x', tight=True)
-    plt.show()
-
-from sklearn.preprocessing import StandardScaler
 def rescale(x, fs, mode, window_duration = 5):
     if mode == 'running':
         mean = np.zeros(x.shape)
         M = np.round(fs*window_duration)
-
         for chan in [0, 1]:
             cumsum = np.cumsum(np.insert(x[:,chan], 0, 0))
             mean[:-(M-1),chan] =  (cumsum[M:] - cumsum[:-M]) / float(M)
-
         var = ((x - mean)**2)
-
         for chan in [0, 1]:
             cumsum = np.cumsum(np.insert(var[:,chan], 0, 0))
             var[:-(M-1),chan] =  (cumsum[M:] - cumsum[:-M]) / float(M)
-
         new_x = (x - mean) / (np.sqrt(var))
     elif mode == 'standardscaler':
         scaler = StandardScaler()
@@ -156,10 +106,6 @@ def rescale(x, fs, mode, window_duration = 5):
         new_x = 2*(x-q5)/(q95-q5) - 1
     return new_x
 
-from scipy.signal import gaussian, sawtooth
-from copy import deepcopy
-from numpy.random import randint as randi
-from numpy.random import normal as randn
 def add_known_complex(x, fs, easy = False, window_duration = 3):
     if easy:
         M = np.round(fs * window_duration)
@@ -196,14 +142,6 @@ def add_known_complex(x, fs, easy = False, window_duration = 3):
             chan = randi(0, 2)
             start_index = randi(0, x.shape[2] - M)
             x[chan, i, start_index:start_index + M] = x[chan, i, start_index:start_index + M] + w
-
-    #new_x = deepcopy(x)
-    #for i in range(0,x.shape[1]):
-    #    new_x[0, i, 100:100+M] = new_x[0, i, 100:100+M] + w
-    #fig, ax = plt.subplots(ncols=1, nrows=2)
-    #ax[0].plot(x[0,0,:])
-    #ax[1].plot(new_x[0,0,:])
-    #plt.show()
     return x
 
 def determine_data_dimensions(data_folder):
@@ -220,36 +158,12 @@ def determine_data_dimensions(data_folder):
         fs = f['fs'][()]
     return (n_channels, n_epoch_samples, fs)
 
-def plot_confusion_matrix(cm, classes,
-                          normalize=False,
-                          title='Confusion matrix',
-                          cmap=plt.cm.Blues):
-    """
-    This function prints and plots the confusion matrix.
-    Normalization can be applied by setting `normalize=True`.
-    """
-    if normalize:
-        cm = cm.astype('float') / cm.sum(axis=1)[:, np.newaxis]
-        print("Normalized confusion matrix")
-    else:
-        print('Confusion matrix, without normalization')
-
-    print(cm)
-
-    plt.imshow(cm, interpolation='nearest', vmin=0, vmax=1,cmap=cmap)
-    plt.title(title)
-    plt.colorbar()
-    tick_marks = np.arange(len(classes))
-    plt.xticks(tick_marks, classes, rotation=45)
-    plt.yticks(tick_marks, classes)
-
-    fmt = '.2f' if normalize else 'd'
-    thresh = cm.max() / 2.
-    for i, j in itertools.product(range(cm.shape[0]), range(cm.shape[1])):
-        plt.text(j, i, format(cm[i, j], fmt),
-                 horizontalalignment="center",
-                 color="white" if cm[i, j] > thresh else "black")
-
-    plt.tight_layout()
-    plt.ylabel('True label')
-    plt.xlabel('Predicted label')
+def read_channel_alias(fp):
+    # Based on output from Hyatt's channel_label_identifier
+    with open(fp) as f:
+        data = json.load(f)
+    alias = {}
+    for chan in data['categories']:
+        for a in data[chan]:
+            alias[a] = chan
+    return alias

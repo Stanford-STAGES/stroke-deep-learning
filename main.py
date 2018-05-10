@@ -10,7 +10,7 @@ from getpass import getuser
 from datahandler import DataHandler
 from models import SimpleCRNN as Model
 from models import input_fn
-from utils import plot_confusion_matrix, determine_data_dimensions
+from utils import determine_data_dimensions
 from shutil import rmtree
 from sklearn.decomposition import PCA
 from sklearn.mixture import GaussianMixture
@@ -27,6 +27,7 @@ std_peak_analysis = False
 visualize_std = False
 gan_activation_maximization = False
 user = getuser()
+
 if user == 'rasmus':
     logdir = './tf_logs/'
     ckptdir = logdir + 'model/'
@@ -51,16 +52,16 @@ if not os.path.exists(logdir):
 
 (n_channels, n_epoch_samples, fs) = determine_data_dimensions(data_folder)
 
-params= {'logdir': logdir,
+params={'logdir': logdir,
          'n_epoch_samples': n_epoch_samples,
-         'time_steps': 5*2*6,
+         'time_steps': 5, #5*2*6,
          'fs': 128,
-         'n_filters': 512,
+         'n_filters': 32,
          'temporal_kernel_size': 3,
          'n_channels': n_channels,
          'pooling_size': 3,
-         'rnn_size': 128,
-         'n_units_dense': 128,
+         'rnn_size': 1,
+         'n_units_dense': 1,
          'n_classes': 2,
          'batch_norm': True,
          'activation': tf.nn.elu,
@@ -76,17 +77,19 @@ params= {'logdir': logdir,
          'learning_rate': 1e-4,
          'train_pct': .75,
          'val_pct': .5,
-         'batch_size': {'train': 8, 'val': 2, 'test': 2},
+         'batch_size': {'train': 2, 'val': 2, 'test': 2},
          'save_checkpoint_steps': 50,
          'save_summary_steps': 50,
-         'buffer_size': 10,
+         'buffer_size': 1,
          'train_steps': None,
          'eval_steps': 100,
          'verbose_shapes': True,
-         'pool_stride': 2,
-         'n_layers': 6,
+         'pool_stride': 3,
+         'n_layers': 4,
          'rnn_layer': True,
          'dense_layer': True,
+         'one_output_per_epoch': True,
+         'training_hook_n_iter': 20,
          }
 
 if params['n_epoch_samples'] % params['time_steps'] != 0:
@@ -125,9 +128,7 @@ if evaluate_model:
     print(eval_results)
     cm = np.asarray([[eval_results["tn"], eval_results["fp"]],
               [eval_results["fn"], eval_results["tp"]]])
-    plot_confusion_matrix(cm, classes=['Control', 'Stroke'], normalize=True,
-                      title='Normalized confusion matrix')
-    plt.show()
+    print(cm)
 
 if export_savedmodel:
     def serving_input_receiver_fn():

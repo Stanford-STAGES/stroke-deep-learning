@@ -8,6 +8,7 @@ class DataHandler(object):
     @classmethod
     def setup_partitions(cls, data_folder, train_pct, val_pct, batch_sizes):
         # Get all IDs in data folder
+
         cls.data_folder = data_folder
 
         h5files = []
