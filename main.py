@@ -18,9 +18,9 @@ from sklearn.mixture import GaussianMixture
 verbose = True
 simulated_data = False
 n2rem_data = False  # control: rem, experimental: n2
-model_memory = False
-train_model = True
-evaluate_model = False
+model_memory = True
+train_model = False
+evaluate_model = True
 export_savedmodel = False
 activation_maximization = False
 std_peak_analysis = False
@@ -60,32 +60,32 @@ params={'logdir': logdir,
          'temporal_kernel_size': 3,
          'n_channels': n_channels,
          'pooling_size': 3,
-         'rnn_size': 1,
-         'n_units_dense': 1,
+         'rnn_size': 32,
+         'n_units_dense': 64,
          'n_classes': 2,
          'batch_norm': True,
          'activation': tf.nn.elu,
          'dropout': True,
-         'dropout_pct': .25,
+         'dropout_pct': .1,
          'kernel_initializer': None,
          'kernel_regularizer': None, #tf.contrib.layers.l2_regularizer(1e-0),
-         'regularization': 1e-2,
-         #'optimizer': tf.train.AdamOptimizer,
-         'optimizer': tf.train.GradientDescentOptimizer,
+         'regularization': 1e-3,
+         'optimizer': tf.train.AdamOptimizer,
+         #'optimizer': tf.train.GradientDescentOptimizer,
          #'optimizer': tf.train.AdadeltaOptimizer,
          #'optimizer': tf.train.RMSPropOptimizer,
          'learning_rate': 1e-4,
          'train_pct': .75,
          'val_pct': .5,
-         'batch_size': {'train': 2, 'val': 2, 'test': 2},
-         'save_checkpoint_steps': 50,
+         'batch_size': {'train': 8, 'val': 2, 'test': 2},
+         'save_checkpoint_steps': 500,
          'save_summary_steps': 50,
          'buffer_size': 1,
          'train_steps': None,
-         'eval_steps': 100,
+         'eval_steps': 10,
          'verbose_shapes': True,
-         'pool_stride': 3,
-         'n_layers': 4,
+         'pool_stride': 2,
+         'n_layers': 3,
          'rnn_layer': True,
          'dense_layer': True,
          'one_output_per_epoch': True,
@@ -119,7 +119,7 @@ classifier = tf.estimator.Estimator(
 
 if train_model:
     train_spec = tf.estimator.TrainSpec(input_fn=lambda: input_fn('train', params), max_steps=params['train_steps'])
-    eval_spec = tf.estimator.EvalSpec(input_fn=lambda: input_fn('val',params),steps=params['eval_steps'])
+    eval_spec = tf.estimator.EvalSpec(input_fn=lambda: input_fn('val',params),steps=params['eval_steps'], throttle_secs=120)
     tf.estimator.train_and_evaluate(classifier, train_spec, eval_spec)
 
 if evaluate_model:
@@ -321,7 +321,7 @@ if std_peak_analysis:
     n_peaks = peaks.shape[0]
     window_size = peaks.shape[1]
     X = np.zeros([n_peaks, n_peaks])
-    lags = np.zeros([n_peaks, n_peaks]) 
+    lags = np.zeros([n_peaks, n_peaks])
     for i in range(n_peaks):
         for j in range(n_peaks):
             a = peaks[i,:]
@@ -461,5 +461,3 @@ if visualize_std:
                                 right=.90, top=.90,
                                 wspace=.1, hspace=.1)
         plt.show()
-
-
