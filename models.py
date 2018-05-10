@@ -166,7 +166,7 @@ class SimpleCRNN:
             predictions["probabilities"] = probabilities
             predictions["features"] = extracted_features
 
-            if self.one_output_per_epoch::
+            if self.one_output_per_epoch:
                 l = tf.expand_dims(logits, 1)
 
                 ylist = [l[:, time, 0] for time in range(1)]
@@ -246,7 +246,7 @@ class SimpleCRNN:
                 true_classes = tf.argmax(y, 1)
             else:
                 y = labels
-                true_classes = tf.argmax(y)
+                true_classes = tf.argmax(y,1)
                 loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits_v2(logits=logits, labels=labels))
 
             l2 = self.regularization * sum(
@@ -256,8 +256,9 @@ class SimpleCRNN:
             )
             loss += l2
 
-            est_classes = tf.reshape(predictions['classes'],[-1])
-            correct_prediction = tf.equal(est_classes, true_classes)
+            #est_classes = tf.reshape(predictions['classes'],[-1])
+            est_classes = predictions['classes']
+	    correct_prediction = tf.equal(est_classes, true_classes)
             accuracy = tf.reduce_mean(tf.cast(correct_prediction, tf.float32))
 
             cost_summary = tf.summary.scalar('Cost', loss)

@@ -18,9 +18,9 @@ from sklearn.mixture import GaussianMixture
 verbose = True
 simulated_data = False
 n2rem_data = False  # control: rem, experimental: n2
-model_memory = True
-train_model = False
-evaluate_model = True
+model_memory = False
+train_model = True
+evaluate_model = False
 export_savedmodel = False
 activation_maximization = False
 std_peak_analysis = False
@@ -54,9 +54,9 @@ if not os.path.exists(logdir):
 
 params={'logdir': logdir,
          'n_epoch_samples': n_epoch_samples,
-         'time_steps': 5, #5*2*6,
+         'time_steps': 5*2*6,
          'fs': 128,
-         'n_filters': 32,
+         'n_filters': 512,
          'temporal_kernel_size': 3,
          'n_channels': n_channels,
          'pooling_size': 3,
@@ -65,11 +65,11 @@ params={'logdir': logdir,
          'n_classes': 2,
          'batch_norm': True,
          'activation': tf.nn.elu,
-         'dropout': True,
-         'dropout_pct': .1,
+         'dropout': False,
+         'dropout_pct': 0,
          'kernel_initializer': None,
          'kernel_regularizer': None, #tf.contrib.layers.l2_regularizer(1e-0),
-         'regularization': 1e-3,
+         'regularization': 5e-3,
          'optimizer': tf.train.AdamOptimizer,
          #'optimizer': tf.train.GradientDescentOptimizer,
          #'optimizer': tf.train.AdadeltaOptimizer,
@@ -77,19 +77,19 @@ params={'logdir': logdir,
          'learning_rate': 1e-4,
          'train_pct': .75,
          'val_pct': .5,
-         'batch_size': {'train': 8, 'val': 2, 'test': 2},
+         'batch_size': {'train': 8, 'val': 8, 'test': 8},
          'save_checkpoint_steps': 500,
-         'save_summary_steps': 50,
+         'save_summary_steps': 500,
          'buffer_size': 1,
          'train_steps': None,
-         'eval_steps': 10,
+         'eval_steps': 100,
          'verbose_shapes': True,
          'pool_stride': 2,
-         'n_layers': 3,
+         'n_layers': 4,
          'rnn_layer': True,
          'dense_layer': True,
          'one_output_per_epoch': True,
-         'training_hook_n_iter': 20,
+         'training_hook_n_iter': 50,
          }
 
 if params['n_epoch_samples'] % params['time_steps'] != 0:
@@ -119,7 +119,7 @@ classifier = tf.estimator.Estimator(
 
 if train_model:
     train_spec = tf.estimator.TrainSpec(input_fn=lambda: input_fn('train', params), max_steps=params['train_steps'])
-    eval_spec = tf.estimator.EvalSpec(input_fn=lambda: input_fn('val',params),steps=params['eval_steps'], throttle_secs=120)
+    eval_spec = tf.estimator.EvalSpec(input_fn=lambda: input_fn('val',params),steps=params['eval_steps'], throttle_secs=360)
     tf.estimator.train_and_evaluate(classifier, train_spec, eval_spec)
 
 if evaluate_model:
