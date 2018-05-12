@@ -143,7 +143,7 @@ controls = all_control_ids.sample(n_exp * 6,
 
 
 control_ids = np.asarray(controls)
-control_ids = [i for i in control_ids if i not in con_id_matched]
+control_ids = [int(i) for i in control_ids if i not in con_id_matched]
 
 IDs = np.concatenate([control_ids,
                        experimental_ids])

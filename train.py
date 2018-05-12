@@ -37,7 +37,7 @@ def serving_input_receiver_fn():
     return tf.estimator.export.TensorServingInputReceiver(features, receiver_tensors)
 
 if __name__ == "__main__":
-    cf = Config(args.config, args.experiment, args.model, args.hparam)
+    cf = Config(args.config, args.experiment, args.model, args.hparam).get_configs()
 
     DataHandler.setup_partitions(cf, eval(args.model_memory))
 
