@@ -3,6 +3,8 @@ import utils
 import h5py
 import numpy as np
 import pandas as pd
+import os
+import sys
 
 # todo: implement rejection of noise epochs
 debugging = False
@@ -98,9 +100,9 @@ for counter, ID in enumerate(IDs):
                 print('    Hypnogram error')
                 continue
 
-        epoched = np.zeros((len(channels_to_load), n_epochs, epoch_samples))
+        epoched = np.zeros((int(len(channels_to_load)), int(n_epochs), int(epoch_samples)))
         for i in range(len(channels_to_load)):
-            epoched[i, :, :] = np.asarray(list(zip(*[iter(x[i,:])] * epoch_samples)))
+            epoched[int(i), :, :] = np.asarray(list(zip(*[iter(x[int(i),:])] * int(epoch_samples))))
 
         if simulated_data:
             x = np.random.normal(0, 1, x.shape)
@@ -131,6 +133,10 @@ for counter, ID in enumerate(IDs):
                 f['fs'] = data['fs']
                 f["group"] = group[counter]
     except Exception as e:
+
+    	exc_type, exc_obj, exc_tb = sys.exc_info()
+    	fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
+    	print(exc_type, fname, exc_tb.tb_lineno)
         print(e)
         print('Error happened while processing: {}'.format(str(filename)))
 
