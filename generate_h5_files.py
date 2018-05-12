@@ -28,7 +28,7 @@ elif cohort == 'SHHS-Sherlock':
     group = np.asarray(df['group'])
     if multimodal:
         channels_to_load = {'eeg1': 0, 'eeg2': 1, 'ecg': 2, 'pulse': 3}
-        output_folder = '/scratch/users/rmth/processed_data_multimodal/'
+        output_folder = '/scratch/users/rmth/processed_shhs_data_multimodal/'
         channel_alias = utils.read_channel_alias(edf_folder+'signal_labels_multimodal.json')
     else:
         channels_to_load = {'eeg1': 0, 'eeg2': 1}
