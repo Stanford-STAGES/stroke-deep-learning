@@ -3,7 +3,6 @@ import utils
 import h5py
 import numpy as np
 import pandas as pd
-import datetime
 
 # todo: implement rejection of noise epochs
 debugging = False
@@ -27,9 +26,14 @@ elif cohort == 'SHHS-Sherlock':
     df = pd.read_csv('/home/users/rmth/stroke-deep-learning/IDs.csv')
     IDs = np.asarray(df['IDs'])
     group = np.asarray(df['group'])
-    channels_to_load = {'eeg1': 0, 'eeg2': 1}
-    output_folder = '/scratch/users/rmth/processed_shhs_data/'
-    channel_aliases = None
+    if multimodal:
+        channels_to_load = {'eeg1': 0, 'eeg2': 1, 'ecg': 2, 'pulse': 3}
+        output_folder = '/scratch/users/rmth/processed_data_multimodal/'
+        channel_alias = utils.read_channel_alias(edf_folder+'signal_labels_multimodal.json')
+    else:
+        channels_to_load = {'eeg1': 0, 'eeg2': 1}
+        output_folder = '/scratch/users/rmth/processed_shhs_data/'
+        channel_aliases = None
 elif cohort == 'SHHS':
     epoch_duration = 5*60
     edf_folder = '/home/rasmus/Desktop/shhs_subset/'
