@@ -7,10 +7,10 @@ import datetime
 
 # todo: implement rejection of noise epochs
 debugging = False
-multimodal = False
+multimodal = True
 simulated_data = False
 rescale_mode = 'soft'
-cohort = 'SSC'
+cohort = 'SHHS'
 
 if cohort == 'SSC':
     edf_folder = '/home/rasmus/Desktop/SSC/raw/edf/'
@@ -36,20 +36,22 @@ elif cohort == 'SHHS':
     hypnogram_folder = None
     control = listdir(edf_folder + 'control')
     stroke = listdir(edf_folder + 'stroke')
-    channel_alias = utils.read_channel_alias(edf_folder+'signal_labels.json')
     if debugging:
         control = control[0:1]
         stroke = stroke[0:1]
     group = np.concatenate((np.zeros(shape=len(control)),
                             np.ones(shape= len(stroke))))
     IDs = control+stroke
-    channels_to_load = {'eeg1': 0, 'eeg2': 1}
     if multimodal:
+        channels_to_load = {'eeg1': 0, 'eeg2': 1, 'ecg': 2, 'pulse': 3}
         output_folder = '/home/rasmus/Desktop/shhs_subset/processed_data_multimodal/'
+        channel_alias = utils.read_channel_alias(edf_folder+'signal_labels_multimodal.json')
     elif simulated_data:
         output_folder = '/home/rasmus/Desktop/shhs_subset/simulated_data/'
     else:
+        channels_to_load = {'eeg1': 0, 'eeg2': 1}
         output_folder = '/home/rasmus/Desktop/shhs_subset/processed_data/'
+        channel_alias = utils.read_channel_alias(edf_folder+'signal_labels.json')
 
 for counter, ID in enumerate(IDs):
     try:

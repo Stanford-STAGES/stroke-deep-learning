@@ -26,7 +26,7 @@ class GANModel:
         self.n_epoch_samples = params['n_epoch_samples']
         self.verbose_shapes = params['verbose_shapes']
         self.logdir = params['logdir']
-        self.batch_size = params['batch_size']['train']
+        self.batch_size = params['batch_size']['config.py']
         self.fs = params['fs']
 
     def _conditional_generator_fn(self, inputs, weight_decay=2.5e-5, is_training=True):

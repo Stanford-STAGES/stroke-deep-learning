@@ -90,6 +90,7 @@ params={'logdir': logdir,
          'dense_layer': True,
          'one_output_per_epoch': True,
          'training_hook_n_iter': 50,
+         'throttle_secs': 120,
          }
 
 if params['n_epoch_samples'] % params['time_steps'] != 0:
@@ -119,7 +120,7 @@ classifier = tf.estimator.Estimator(
 
 if train_model:
     train_spec = tf.estimator.TrainSpec(input_fn=lambda: input_fn('train', params), max_steps=params['train_steps'])
-    eval_spec = tf.estimator.EvalSpec(input_fn=lambda: input_fn('val',params),steps=params['eval_steps'], throttle_secs=360)
+    eval_spec = tf.estimator.EvalSpec(input_fn=lambda: input_fn('val',params),steps=params['eval_steps'], throttle_secs=params['throttle_secs'])
     tf.estimator.train_and_evaluate(classifier, train_spec, eval_spec)
 
 if evaluate_model:

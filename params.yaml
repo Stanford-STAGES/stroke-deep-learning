@@ -1,0 +1,35 @@
+default: &DEFAULT
+  n_classes: 2
+  time_steps: 60
+  one_output_per_epoch: True
+  n_layers: 4
+  n_filters: 512
+  temporal_kernel_size: 3
+  pool_stride: 2
+  pooling_size: 3
+  rnn_layer: True
+  rnn_size: 32
+  dense_layer: True
+  n_units_dense: 128
+  batch_norm: True
+  activation: tf.nn.elu
+  dropout: False
+  dropout_pct: 0
+  kernel_initializer: #None
+  kernel_regularizer: #None #tf.contrib.layers.l2_regularizer(1e-0),
+  regularization: 5e-3
+  optimizer: tf.train.AdamOptimizer
+  learning_rate: 1e-4
+small:
+  <<: *DEFAULT
+  time_steps: 5
+  temporal_kernel_size: 4
+  pool_stride: 3
+  pooling_size: 4
+  one_output_per_epoch: True
+  rnn_layer: True
+  rnn_size: 1
+  dense_layer: True
+  n_units_dense: 16
+  n_layers: 5
+  n_filters: 32
