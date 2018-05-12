@@ -130,7 +130,8 @@ for counter, ID in enumerate(IDs):
                 dset = f.create_dataset("x", data=x, chunks=True)
                 f['fs'] = data['fs']
                 f["group"] = group[counter]
-    except:
+    except Exception as e:
+        print(e)
         print('Error happened while processing: {}'.format(str(filename)))
 
 print("All files processed.")
