@@ -89,11 +89,15 @@ for counter, ID in enumerate(IDs):
                 filename = edf_folder + 'control/' + ID
 
         try:
-	    print(filename)
+            print(filename)
             data = utils.load_edf_file(filename, channels_to_load,
                                        cohort = cohort,
                                        channel_alias = channel_alias)
-        except:
+        except Exception as e:
+            exc_type, exc_obj, exc_tb = sys.exc_info()
+            fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
+            print(exc_type, fname, exc_tb.tb_lineno)
+            print(e)
             print('    EDF error (loading failed).')
             continue
         if data == -1:
