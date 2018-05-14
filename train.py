@@ -23,8 +23,8 @@ parser.add_argument('--export_model', type=bool, default=True,
                     help='serve trained model as predictor when True (defaults to True)')
 parser.add_argument('--evaluate_model', type=bool, default=False,
                     help='evaluate model on test data (defaults to False)')
-parser.add_argument('--only_load_model', type=bool, default=False,
-                    help='only load the model, but do not train (defaults to False)')
+parser.add_argument('--dont_train', type=bool, default=False,
+                    help='if True do not train (defaults to False)')
 args = parser.parse_args()
 
 def serving_input_receiver_fn():
@@ -48,15 +48,15 @@ if __name__ == "__main__":
             model_dir = cf.eparams.ckptdir,
             config = run_config)
 
-    if args.only_load_model: sys.exit()
     if args.verbose: tf.logging.set_verbosity(tf.logging.INFO)
 
-    train_spec = tf.estimator.TrainSpec(input_fn=lambda: input_fn('train', cf.eparams),
-                                        max_steps=cf.eparams.train_steps)
-    eval_spec = tf.estimator.EvalSpec(input_fn=lambda: input_fn('val', cf.eparams),
-                                      steps=cf.eparams.eval_steps,
-                                      throttle_secs=cf.eparams.throttle_secs)
-    tf.estimator.train_and_evaluate(classifier, train_spec, eval_spec)
+    if not args.dont_train:
+        train_spec = tf.estimator.TrainSpec(input_fn=lambda: input_fn('train', cf.eparams),
+                                            max_steps=cf.eparams.train_steps)
+        eval_spec = tf.estimator.EvalSpec(input_fn=lambda: input_fn('val', cf.eparams),
+                                          steps=cf.eparams.eval_steps,
+                                          throttle_secs=cf.eparams.throttle_secs)
+        tf.estimator.train_and_evaluate(classifier, train_spec, eval_spec)
 
     if args.evaluate_model: classifier.evaluate(input_fn=lambda: input_fn('test_sequence', cf.eparams))
     if args.export_model: classifier.export_savedmodel(export_dir_base=cf.eparams.ckptdir, serving_input_receiver_fn=serving_input_receiver_fn)
