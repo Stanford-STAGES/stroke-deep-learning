@@ -35,7 +35,7 @@ elif cohort == 'SHHS-Sherlock':
     else:
         channels_to_load = {'eeg1': 0, 'eeg2': 1}
         output_folder = '/scratch/users/rmth/processed_shhs_data/'
-        channel_aliases = None
+        channel_alias = None
 elif cohort == 'SHHS-Sherlock-matched':
     epoch_duration = 5*60
     edf_folder = '/scratch/PI/mignot/nsrr/shhs/polysomnography/edfs/shhs1/'
@@ -51,7 +51,7 @@ elif cohort == 'SHHS-Sherlock-matched':
     else:
         channels_to_load = {'eeg1': 0, 'eeg2': 1}
         output_folder = '/scratch/users/rmth/processed_shhs_data_matched/'
-        channel_aliases = None
+        channel_alias = utils.read_channel_alias(output_folder+'signal_labels.json')
 elif cohort == 'SHHS':
     epoch_duration = 5*60
     edf_folder = '/home/rasmus/Desktop/shhs_subset/'

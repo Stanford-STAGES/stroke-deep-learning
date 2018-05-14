@@ -28,7 +28,6 @@ def load_edf_file(filename, channels_to_load, cohort, channel_alias):
     f = pyedflib.EdfReader(filename)
     labels = f.getSignalLabels()
     contained = {channel_alias[e]: i for (i, e) in enumerate(labels) if e in channel_alias}
-    
     if not contained or len(contained) != len(channels_to_load):
         print(labels)
         print(contained)
