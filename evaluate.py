@@ -15,10 +15,12 @@ parser.add_argument('--experiment', type=str, default='basic',
                     help='name of experimental profile to use (defaults to basis, defined in experiment.yaml)')
 parser.add_argument('--model', type=str, default='simple',
                     help='name of model/hyperparameter profile to use (defaults to default, defined in params.yaml)')
+parser.add_argument('--hparam', type=str, default=None,
+                    help='comma-seperated hparams and value, overrides model parameters from profile (defaults to None), format e.g.: --hparams=learning_rate=0.3.')
 args = parser.parse_args()
 
 if __name__ == "__main__":
-    cf = Config(args.config, args.experiment, args.model, None)
+    cf = Config(args.config, args.experiment, args.model, args.hparam).get_configs()
     DataHandler.setup_partitions(cf, model_memory = True)
 
     exports = [int(e) for e in os.listdir(cf.eparams.ckptdir) if e.isdigit()]
@@ -41,7 +43,7 @@ if __name__ == "__main__":
                     predictions = predict_fn({"input": x})
                     prob.append(np.transpose(predictions['probabilities'][:, 1]))
                 except:
-                    print('Done processing {}'.format(id))
+                    print('Validation: done processing {}'.format(id))
                     break
             val_group[id] = np.argmax(y[0,:])
             val_probs[id] = np.reshape(np.asarray(prob), [-1])
