@@ -8,10 +8,10 @@ import sys
 
 # todo: implement rejection of noise epochs
 debugging = False
-multimodal = True
+multimodal = False
 simulated_data = False
 rescale_mode = 'soft'
-cohort = 'SHHS-Sherlock'
+cohort = 'SHHS-Sherlock-matched'
 
 if cohort == 'SSC':
     edf_folder = '/home/rasmus/Desktop/SSC/raw/edf/'
@@ -35,6 +35,21 @@ elif cohort == 'SHHS-Sherlock':
     else:
         channels_to_load = {'eeg1': 0, 'eeg2': 1}
         output_folder = '/scratch/users/rmth/processed_shhs_data/'
+        channel_aliases = None
+elif cohort == 'SHHS-Sherlock-matched':
+    epoch_duration = 5*60
+    edf_folder = '/scratch/PI/mignot/nsrr/shhs/polysomnography/edfs/shhs1/'
+    hypnogram_folder = None
+    df = pd.read_csv('/home/users/rmth/stroke-deep-learning/matched_controls.csv')
+    IDs = np.asarray(df['conIDs'])
+    group = np.asarray(np.zeros(len(IDs)))
+    if multimodal:
+        channels_to_load = {'eeg1': 0, 'eeg2': 1, 'ecg': 2, 'pulse': 3}
+        output_folder = '/scratch/users/rmth/processed_shhs_data_multimodal/'
+        channel_alias = utils.read_channel_alias(output_folder+'signal_labels_multimodal.json')
+    else:
+        channels_to_load = {'eeg1': 0, 'eeg2': 1}
+        output_folder = '/scratch/users/rmth/processed_shhs_data_matched/'
         channel_aliases = None
 elif cohort == 'SHHS':
     epoch_duration = 5*60
@@ -133,10 +148,9 @@ for counter, ID in enumerate(IDs):
                 f['fs'] = data['fs']
                 f["group"] = group[counter]
     except Exception as e:
-
-    	exc_type, exc_obj, exc_tb = sys.exc_info()
-    	fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
-    	print(exc_type, fname, exc_tb.tb_lineno)
+        exc_type, exc_obj, exc_tb = sys.exc_info()
+        fname = os.path.split(exc_tb.tb_frame.f_code.co_filename)[1]
+        print(exc_type, fname, exc_tb.tb_lineno)
         print(e)
         print('Error happened while processing: {}'.format(str(filename)))
 
