@@ -28,7 +28,7 @@ def load_edf_file(filename, channels_to_load, cohort, channel_alias):
     f = pyedflib.EdfReader(filename)
     labels = f.getSignalLabels()
     contained = {channel_alias[e]: i for (i, e) in enumerate(labels) if e in channel_alias}
-
+    
     if not contained or len(contained) != len(channels_to_load):
         print(labels)
         print(contained)
@@ -38,7 +38,7 @@ def load_edf_file(filename, channels_to_load, cohort, channel_alias):
     if cohort == 'SSC':
         fs = fss[contained['C3']]
         n = f.getNSamples()[contained['C3']]
-    elif cohort == 'SHHS' or cohort == 'SHHS-Sherlock':
+    elif cohort == 'SHHS' or cohort == 'SHHS-Sherlock' or cohort=='SHHS-Sherlock-matched':
         fs = fss[contained['eeg1']]
         n = f.getNSamples()[contained['eeg2']]
     X = np.zeros((len(channels_to_load), n))

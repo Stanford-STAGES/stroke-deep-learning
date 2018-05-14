@@ -42,6 +42,7 @@ elif cohort == 'SHHS-Sherlock-matched':
     hypnogram_folder = None
     df = pd.read_csv('/home/users/rmth/stroke-deep-learning/matched_controls.csv')
     IDs = np.asarray(df['conIDs'])
+    print(IDs)
     group = np.asarray(np.zeros(len(IDs)))
     if multimodal:
         channels_to_load = {'eeg1': 0, 'eeg2': 1, 'ecg': 2, 'pulse': 3}
@@ -79,8 +80,8 @@ for counter, ID in enumerate(IDs):
         print('Processing: ' + str(ID) + ' (number ' + str(counter+1) + ' of ' + str(len(IDs)) + ').')
         if cohort == 'SSC':
             filename = edf_folder + ID
-        elif cohort == 'SHHS-Sherlock':
-            filename = edf_folder + 'shhs1-' + str(ID) + '.edf'
+        elif cohort == 'SHHS-Sherlock' or 'SHHS-Sherlock-matched':
+            filename = edf_folder + 'shhs1-' + str(int(ID)) + '.edf'
         elif cohort == 'SHHS':
             if group[counter] == 1:
                 filename = edf_folder + 'stroke/' + ID
@@ -88,6 +89,7 @@ for counter, ID in enumerate(IDs):
                 filename = edf_folder + 'control/' + ID
 
         try:
+	    print(filename)
             data = utils.load_edf_file(filename, channels_to_load,
                                        cohort = cohort,
                                        channel_alias = channel_alias)
@@ -135,7 +137,7 @@ for counter, ID in enumerate(IDs):
                     dset = f.create_dataset("x", data=x[:, hypnogram == stage, :], chunks=True)
                     f['fs'] = data['fs']
                     f["group"] = group
-        elif cohort == 'SHHS-Sherlock':
+        elif cohort == 'SHHS-Sherlock' or cohort == 'SHHS-Sherlock-matched':
             output_file_name = output_folder + 'shhs1-' + str(ID) + ".hpf5"
             with h5py.File(output_file_name, "w") as f:
                 dset = f.create_dataset('x', data=x, chunks=True)
