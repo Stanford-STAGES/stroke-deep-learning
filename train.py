@@ -15,8 +15,8 @@ parser.add_argument('--model', type=str, default='small',
                     help='name of model/hyperparameter profile to use (defaults to default, defined in params.yaml)')
 parser.add_argument('--verbose', type=bool, default=True,
                     help='set verbosity of tf.logging (defaults to True)')
-parser.add_argument('--model_memory', type=str, default='False',
-                    help='loads model with same profiles if it exists when True, if False deletes existing model (defaults to False)')
+parser.add_argument('--model_memory', type=str, default='True',
+                    help='loads model with same profiles if it exists when True, if False deletes existing model (defaults to True)')
 parser.add_argument('--hparam', type=str, default=None,
                     help='comma-seperated hparams and value, overrides model parameters from profile (defaults to None), format e.g.: --hparams=learning_rate=0.3.')
 parser.add_argument('--export_model', type=bool, default=True,
