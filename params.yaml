@@ -12,13 +12,13 @@ default: &DEFAULT
   dense_layer: True
   n_units_dense: 128
   batch_norm: True
-  activation: tf.nn.elu
+  activation: tf.nn.elu #doesn't work, goes to default
   dropout: False
   dropout_pct: 0
   kernel_initializer: #None
   kernel_regularizer: #None #tf.contrib.layers.l2_regularizer(1e-0),
   regularization: 5e-3
-  optimizer: tf.train.AdamOptimizer
+  optimizer: tf.train.AdamOptimizer #doesnt work goes to defualt
   learning_rate: 1e-4
 small:
   <<: *DEFAULT
