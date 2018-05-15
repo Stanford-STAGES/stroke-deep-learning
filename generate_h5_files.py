@@ -42,7 +42,6 @@ elif cohort == 'SHHS-Sherlock-matched':
     hypnogram_folder = None
     df = pd.read_csv('/home/users/rmth/stroke-deep-learning/matched_controls.csv')
     IDs = np.asarray(df['conIDs'])
-    print(IDs)
     group = np.asarray(np.zeros(len(IDs)))
     if multimodal:
         channels_to_load = {'eeg1': 0, 'eeg2': 1, 'ecg': 2, 'pulse': 3}

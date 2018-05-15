@@ -5,8 +5,8 @@ import pandas
 from sklearn.metrics import roc_curve, auc, f1_score, accuracy_score
 
 with open('probabilities.pkl', 'rb') as f:
-    test_group, test_probs, val_group, val_probs = pickle.load(f, encoding='latin1')
-
+    val_group, val_probs, test_group, test_probs, matched_probs, matched_group = pickle.load(f, encoding='latin1')
+    #test_group, test_probs, val_group, val_probs = pickle.load(f, encoding='latin1')
 
 '''
 fig, ax = plt.subplots(nrows=2)

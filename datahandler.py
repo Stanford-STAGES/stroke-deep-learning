@@ -21,7 +21,6 @@ class DataHandler(object):
         for file in listdir(cls.data_folder):
             if file.endswith(".hpf5"):
                 h5files.append(file)
-        cls.ids = [f[:-5] for f in h5files]
 
         # Load each file and get its group and number of epochs
         cls.labels = {}
@@ -37,6 +36,7 @@ class DataHandler(object):
                     cls.current_epoch[id] = 0
             except:
                 print('Something is wrong with {}'.format(id))
+
 
         if model_memory and exists(cf.eparams.ckptdir):
             print('Restoring partitions')
@@ -79,19 +79,42 @@ class DataHandler(object):
         for i, id in enumerate(cls.partitions['test']):
             cls.n_shuffles[id] = 1
 
+        if cf.matched_folder:
+            # todo: validate
+            cls.matched_folder = cf.matched_folder
+            h5files = []
+            for file in listdir(cls.matched_folder):
+                if file.endswith(".hpf5"):
+                    h5files.append(file)
+            cls.m_ids = [f[:-5] for f in h5files]
+
+            for i, id in enumerate(cls.m_ids):
+                try:
+                    with h5py.File(cls.matched_folder + id + '.hpf5', "r") as f:
+                        cls.labels[id] = int(f["group"][()])
+                        cls.n_epochs[id] = f['x'].shape[1]
+                        cls.epoch_order[id] = np.arange(0, cls.n_epochs[id] - 1)
+                        cls.current_epoch[id] = 0
+                except:
+                    print('Something is wrong with {}'.format(id))
+            cls.partitions['matched'] = cls.m_ids
+
     @classmethod
     def set_partitions(cls, partitions):
         cls.partitions = partitions
         return cls.partitions
-    @classmethod
-    def get_fs(cls):
-        return cls.fs
-    @classmethod
-    def get_partition(cls):
-        return cls.partitions
-    @classmethod
-    def get_n_epochs(cls):
-        return cls.n_epochs
+
+    #@classmethod
+    #def get_fs(cls):
+    #    return cls.fs
+
+    #@classmethod
+    #def get_partition(cls):
+    #    return cls.partitions
+
+    #@classmethod
+    #def get_n_epochs(cls):
+    #    return cls.n_epochs
 
     def __init__(self, subset, ID = None):
         self.subset = subset
@@ -133,10 +156,16 @@ class DataHandler(object):
         return data, self.labels[id]
 
     def __load_h5data_sequence(self, id):
-        with h5py.File(self.data_folder + id + '.hpf5', "r") as f:
-            dset = np.array(f["x"])
-            data = np.squeeze(dset[:, :, :])
-            data = np.transpose(data, [1, 2, 0])
+        if self.subset == 'matched':
+            path = self.matched_folder + id + '.hpf5'
+        else:
+            path = self.data_folder + id + '.hpf5'
+
+        with h5py.File(path, "r") as f:
+                dset = np.array(f["x"])
+                data = np.squeeze(dset[:, :, :])
+                data = np.transpose(data, [1, 2, 0])
+
         return data, self.labels[id]
 
     def __get_exploration_order(self):

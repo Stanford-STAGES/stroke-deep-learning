@@ -2,6 +2,7 @@ import argparse
 import tensorflow as tf
 import os
 import numpy as np
+import pandas as pd
 from tensorflow.contrib import predictor
 from models import input_fn
 from datahandler import DataHandler
@@ -20,7 +21,7 @@ parser.add_argument('--hparam', type=str, default=None,
 args = parser.parse_args()
 
 if __name__ == "__main__":
-    cf = Config(args.config, args.experiment, args.model, args.hparam).get_configs()
+    cf = Config(args.config, args.experiment, args.model, args.hparam).get_configs(matched=True)
     DataHandler.setup_partitions(cf, model_memory = True)
 
     exports = [int(e) for e in os.listdir(cf.eparams.ckptdir) if e.isdigit()]
@@ -29,41 +30,38 @@ if __name__ == "__main__":
 
     valIDs = DataHandler.partitions['val']
     testIDs = DataHandler.partitions['test']
+    matchedIDs = DataHandler.partitions['matched']
+
     val_probs = {}
     val_group = {}
     test_probs = {}
     test_group = {}
+    matched_probs = {}
+    matched_group = {}
+
+    def run_inference(id, partition):
+        features, labels = input_fn(partition, cf.eparams, id)
+        prob = []
+        while True:
+            try:
+                x, y = sess.run([features, labels])
+                predictions = predict_fn({"input": x})
+                prob.append(np.transpose(predictions['probabilities'][:, 1]))
+            except:
+                print('{}: done processing {}'.format(partition, id))
+                break
+        return np.argmax(y[0,:]), np.reshape(np.asarray(prob), [-1])
+
     with tf.Session() as sess:
         for id in valIDs:
-            features, labels = input_fn('val_id', cf.eparams, id)
-            prob = []
-            while True:
-                try:
-                    x, y = sess.run([features, labels])
-                    predictions = predict_fn({"input": x})
-                    prob.append(np.transpose(predictions['probabilities'][:, 1]))
-                except:
-                    print('Validation: done processing {}'.format(id))
-                    break
-            val_group[id] = np.argmax(y[0,:])
-            val_probs[id] = np.reshape(np.asarray(prob), [-1])
+            val_group[id], val_probs[id] = run_inference(id, 'val_id')
         for id in testIDs:
-            features, labels = input_fn('test_id', cf.eparams, id)
-            prob = []
-            while True:
-                try:
-                    x, y = sess.run([features, labels])
-                    predictions = predict_fn({"input": x})
-                    prob.append(np.transpose(predictions['probabilities'][:, 1]))
-                except:
-                    print('Done processing {}'.format(id))
-                    break
-            test_group[id] = np.argmax(y[0,:])
-            test_probs[id] = np.reshape(np.asarray(prob), [-1])
-
+            test_group[id], test_probs[id] = run_inference(id, 'test_id')
+        for id in matchedIDs:
+            matched_group[id], matched_probs[id] = run_inference(id, 'matched_id')
 
     with open(cf.eparams.ckptdir + 'eval/probabilities.pkl', 'wb') as f:
-        pickle.dump([test_group, test_probs, val_group, val_probs], f)
+        pickle.dump([val_group, val_probs, test_group, test_probs, matched_probs, matched_group], f)
 
     #with open(cf.eparams.ckptdir + 'eval/probabilities.pkl', 'rb') as f:
     #    test_group, test_probs, val_group, val_probs = pickle.load(f)

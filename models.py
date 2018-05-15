@@ -234,7 +234,7 @@ class CRNN:
     def vars(self):
         return tf.get_collection(tf.GraphKeys.TRAINABLE_VARIABLES, scope=self.name)
 
-def input_fn(mode,params, ID = None):
+def input_fn(mode, params, ID = None, path = None):
     if mode == 'train' or mode == 'val':
         gen = DataHandler(mode).generate_batches
     elif mode == 'test_sequence':
@@ -243,6 +243,8 @@ def input_fn(mode,params, ID = None):
         gen = DataHandler('val', ID).generate_sequence_ID
     elif mode == 'test_id':
         gen = DataHandler('test', ID).generate_sequence_ID
+    elif mode == 'matched_id':
+        gen = DataHandler('matched', ID).generate_sequence_ID
     elif mode == 'test_batch':
         gen = DataHandler('test').generate_batches
     ds = tf.data.Dataset.from_generator(gen,
