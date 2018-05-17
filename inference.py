@@ -44,6 +44,8 @@ if __name__ == "__main__":
         prob = []
         while True:
             try:
+                # this will break when input_fn can't make a full 16 times 5 min input
+                # todo: use smaller batch, or zero pad for missing in batch
                 x, y = sess.run([features, labels])
                 predictions = predict_fn({"input": x})
                 prob.append(np.transpose(predictions['probabilities'][:, 1]))
@@ -62,7 +64,3 @@ if __name__ == "__main__":
 
     with open(cf.eparams.ckptdir + 'eval/probabilities.pkl', 'wb') as f:
         pickle.dump([val_group, val_probs, test_group, test_probs, matched_probs, matched_group], f)
-
-    #with open(cf.eparams.ckptdir + 'eval/probabilities.pkl', 'rb') as f:
-    #    test_group, test_probs, val_group, val_probs = pickle.load(f)
-
