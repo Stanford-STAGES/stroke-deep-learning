@@ -156,6 +156,7 @@ class DataHandler(object):
                 except:
                     print('Something is wrong with {}'.format(id))
             cls.partitions['matched'] = cls.m_ids
+            cls.batch_sizes['matched'] = 8
 
     @classmethod
     def set_partitions(cls, partitions):
