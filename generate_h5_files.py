@@ -11,7 +11,8 @@ debugging = False
 multimodal = False
 simulated_data = False
 rescale_mode = 'soft'
-cohort = 'SHHS-Sherlock-matched'
+#cohort = 'SHHS-Sherlock-matched'
+cohort = 'SHHS'
 
 if cohort == 'SSC':
     edf_folder = '/home/rasmus/Desktop/SSC/raw/edf/'
@@ -79,7 +80,7 @@ for counter, ID in enumerate(IDs):
         print('Processing: ' + str(ID) + ' (number ' + str(counter+1) + ' of ' + str(len(IDs)) + ').')
         if cohort == 'SSC':
             filename = edf_folder + ID
-        elif cohort == 'SHHS-Sherlock' or 'SHHS-Sherlock-matched':
+        elif cohort == 'SHHS-Sherlock' or cohort == 'SHHS-Sherlock-matched':
             filename = edf_folder + 'shhs1-' + str(int(ID)) + '.edf'
         elif cohort == 'SHHS':
             if group[counter] == 1:
