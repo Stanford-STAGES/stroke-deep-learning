@@ -20,6 +20,11 @@ default: &DEFAULT
   regularization: 5e-3
   optimizer: tf.train.AdamOptimizer #doesnt work goes to defualt
   learning_rate: 1e-4
+revised:
+  <<: *DEFAULT
+  n_filters: 256
+  rnn_size: 4
+  n_units_dense: 64
 small:
   <<: *DEFAULT
   time_steps: 5

@@ -81,7 +81,7 @@ class DataHandler(object):
                                       'val': fold_ids[idx[4]]}
                     partitions_dicts.append(partitions)
 
-                cls.partitions = partitions_dicts[cross_validate]
+                cls.partitions = partitions_dicts[cross_validate-1]
 
                 base_dir = config.eparams.ckptdir[:-4]
                 if exists(base_dir):
