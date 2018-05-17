@@ -15,8 +15,9 @@ class CRNN:
                                  use_bias=False,  # DUE TO ERROR WHEN NOT HAVING
                                  padding='valid',
                                  activation=self.p.activation,
-                                 kernel_initializer=self.p.kernel_initializer,
-                                 kernel_regularizer=self.p.kernel_regularizer)
+                                 kernel_regularizer=tf.contrib.layers.l2_regularizer(self.p.kernel_regularizer_scale),
+                                 #kernel_regularizer=self.p.kernel_regularizer,
+                                 kernel_initializer=self.p.kernel_initializer)
         return conv
 
     def __pool_layer(self, input):
@@ -52,7 +53,10 @@ class CRNN:
             with tf.name_scope('conv_net'):
                 stack_args = []
                 for i in range(self.p.n_layers):
-                    stack_args.append(self.p.n_filters//(2**i))
+                    if self.p.flipped_architecture:
+                        stack_args.append(self.p.n_filters*(2**i))
+                    else:
+                        stack_args.append(self.p.n_filters//(2**i))
                 conv_out = tf.contrib.layers.stack(input, self.__conv_block, stack_args, scope='conv_block')
 
             with tf.name_scope('rnn'):
@@ -63,6 +67,9 @@ class CRNN:
                     if self.verbose_shapes: print('rnn_input: {}'.format(rnn_input.shape))
                     lstm_fw_cell = tf.contrib.cudnn_rnn.CudnnCompatibleLSTMCell(self.p.rnn_size)
                     lstm_bw_cell = tf.contrib.cudnn_rnn.CudnnCompatibleLSTMCell(self.p.rnn_size)
+                    if self.p.rnn_dropout and self.training:
+                        lstm_fw_cell = tf.contrib.rnn.DropoutWrapper(lstm_fw_cell, output_keep_prob=1-self.p.rnn_dropout_probability)
+                        lstm_bw_cell = tf.contrib.rnn.DropoutWrapper(lstm_bw_cell, output_keep_prob=1-self.p.rnn_dropout_probability)
                     rnn_states, _ = tf.nn.bidirectional_dynamic_rnn(lstm_fw_cell,
                                                                     lstm_bw_cell,
                                                                     rnn_input,
@@ -79,7 +86,8 @@ class CRNN:
                 if self.p.dense_layer:
                     output = tf.layers.dense(inputs=dense_input,
                                                   units=self.p.n_units_dense,
-                                                  kernel_regularizer=self.p.kernel_regularizer,
+                                                  #kernel_regularizer=self.p.kernel_regularizer,
+                                                  kernel_regularizer=tf.contrib.layers.l2_regularizer(self.p.kernel_regularizer_scale),
                                                   activation=self.p.activation)
                 else:
                     output = dense_input

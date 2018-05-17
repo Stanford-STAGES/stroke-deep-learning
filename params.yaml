@@ -22,9 +22,18 @@ default: &DEFAULT
   learning_rate: 1e-4
 revised:
   <<: *DEFAULT
-  n_filters: 256
   rnn_size: 4
   n_units_dense: 64
+  flipped_architecture: True
+  n_filters: 8
+  n_layers: 6
+  pool_stride: 2
+  pooling_size: 3
+  learning_rate: 1e-4
+  kernel_regularizer_scale: 0.0 #1e-1 #tf.contrib.layers.l2_regularizer(1e-2)
+  regularization: 0
+  rnn_dropout: True
+  rnn_dropout_probability: 0 #0.4
 small:
   <<: *DEFAULT
   time_steps: 5

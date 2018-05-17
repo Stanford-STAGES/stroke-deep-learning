@@ -11,10 +11,12 @@ parser.add_argument('--config', type=str, default='shhs',
                     help='name of storage configuration profile to use (defaults to local, defined in config.yaml)')
 parser.add_argument('--experiment', type=str, default='local',
                     help='name of experimental profile to use (defaults to basis, defined in experiment.yaml)')
-parser.add_argument('--model', type=str, default='small',
+parser.add_argument('--model', type=str, default='revised',
                     help='name of model/hyperparameter profile to use (defaults to default, defined in params.yaml)')
 parser.add_argument('--verbose', type=bool, default=True,
                     help='set verbosity of tf.logging (defaults to True)')
+
+# this is a string, and I can't remember why i did that, and haven't tested if it could be changed to a bool...
 parser.add_argument('--model_memory', type=str, default='True',
                     help='loads model with same profiles if it exists when True, if False deletes existing model (defaults to True)')
 parser.add_argument('--hparam', type=str, default=None,
