@@ -24,19 +24,24 @@ class Config():
         self.m = model_profile
         self.o = overrides
 
-    def get_configs(self, matched = False):
-        hparam = new_hparam('/home/users/rmth/stroke-deep-learning/config.yaml', self.c)
+    def get_configs(self, matched = False, cross_validate = None):
+        #hparam = new_hparam('/home/users/rmth/stroke-deep-learning/config.yaml', self.c)
+        hparam = new_hparam('config.yaml', self.c)
         if matched:
             hparam.add_hparam('matched_folder', hparam.data_folder + 'matched_controls/')
         else:
             hparam.add_hparam('matched_folder', None)
 
         # Setup experimental setup paramenters and name model based on profiles
-        hparam.eparams = new_hparam('/home/users/rmth/stroke-deep-learning/experiment.yaml', self.e)
-        hparam.eparams.add_hparam('ckptdir', hparam.logdir+self.c+'_'+self.e+'_'+self.m+'/')
-
-        # Setup model parameters/hyperparameters and dete rmine data dimensions
-        hparam.hparams = new_hparam('/home/users/rmth/stroke-deep-learning/params.yaml', self.m)
+        #hparam.eparams = new_hparam('/home/users/rmth/stroke-deep-learning/experiment.yaml', self.e)
+        hparam.eparams = new_hparam('experiment.yaml', self.e)
+        if cross_validate:
+            hparam.eparams.add_hparam('ckptdir', hparam.logdir+self.c+'_'+self.e+'_'+self.m+'_cv'+'/cv'+str(cross_validate)+'/')
+        else:
+            hparam.eparams.add_hparam('ckptdir', hparam.logdir + self.c + '_' + self.e + '_' + self.m + '/')
+        # Setup model parameters/hyperparameters and determine data dimensions
+        #hparam.hparams = new_hparam('/home/users/rmth/stroke-deep-learning/params.yaml', self.m)
+        hparam.hparams = new_hparam('params.yaml', self.m)
         if self.o:
             hparam.hparams.parse(self.o)
             self.o = self.o.replace('_', '')

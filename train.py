@@ -25,6 +25,8 @@ parser.add_argument('--evaluate_model', type=bool, default=False,
                     help='evaluate model on test data (defaults to False)')
 parser.add_argument('--dont_train', type=bool, default=False,
                     help='if True do not train (defaults to False)')
+parser.add_argument('--cross_validate', type=int, default=None,
+                    help='if True train 5 models and do cross-validation')
 args = parser.parse_args()
 
 def serving_input_receiver_fn():
@@ -37,11 +39,17 @@ def serving_input_receiver_fn():
     return tf.estimator.export.TensorServingInputReceiver(features, receiver_tensors)
 
 if __name__ == "__main__":
-    cf = Config(args.config, args.experiment, args.model, args.hparam).get_configs()
+    cf = Config(args.config,
+                args.experiment,
+                args.model,
+                args.hparam).get_configs(cross_validate = args.cross_validate)
 
-    DataHandler.setup_partitions(cf, eval(args.model_memory))
+    DataHandler.setup_partitions(config = cf,
+                                 model_memory = eval(args.model_memory),
+                                 cross_validate = args.cross_validate)
 
-    run_config = tf.estimator.RunConfig(save_checkpoints_steps=cf.eparams.save_checkpoint_steps, save_summary_steps=cf.eparams.save_summary_steps)
+    run_config = tf.estimator.RunConfig(save_checkpoints_steps=cf.eparams.save_checkpoint_steps,
+                                        save_summary_steps=cf.eparams.save_summary_steps)
     model = Model('CRNN', cf.eparams)
     classifier = tf.estimator.Estimator(
             model_fn = lambda features, labels, mode: model(features, labels, mode, cf.hparams),
