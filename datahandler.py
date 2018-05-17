@@ -21,6 +21,7 @@ class DataHandler(object):
         for file in listdir(cls.data_folder):
             if file.endswith(".hpf5"):
                 h5files.append(file)
+        cls.ids = [f[:-5] for f in h5files]
 
         # Load each file and get its group and number of epochs
         cls.labels = {}
@@ -98,6 +99,7 @@ class DataHandler(object):
                 except:
                     print('Something is wrong with {}'.format(id))
             cls.partitions['matched'] = cls.m_ids
+            cls.batch_sizes['matched'] = 8
 
     @classmethod
     def set_partitions(cls, partitions):
