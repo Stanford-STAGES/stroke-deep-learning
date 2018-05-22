@@ -13,7 +13,8 @@ local: &DEFAULT
 cluster:
   <<: *DEFAULT
   save_checkpoint_steps: 100
-  save_summary_steps: 500
-  throttle_secs: 340
-  buffer_size: 10
+  save_summary_steps: 100
+  train_steps: 
+  throttle_secs: 120
+  buffer_size: 50
   batch_size: {'train': 8, 'val': 8, 'test': 8}

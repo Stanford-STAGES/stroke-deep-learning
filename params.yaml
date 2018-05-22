@@ -14,7 +14,7 @@ default: &DEFAULT
   batch_norm: True
   activation: tf.nn.elu #doesn't work, goes to default
   dropout: False
-  dropout_pct: 0
+  dropout_pct: 0.0
   kernel_initializer: #None
   kernel_regularizer: #None #tf.contrib.layers.l2_regularizer(1e-0),
   regularization: 5e-3
@@ -30,10 +30,24 @@ revised:
   pool_stride: 2
   pooling_size: 3
   learning_rate: 1e-4
-  kernel_regularizer_scale: 0.0 #1e-1 #tf.contrib.layers.l2_regularizer(1e-2)
+  kernel_regularizer_scale: 1e-2
   regularization: 0
   rnn_dropout: True
-  rnn_dropout_probability: 0 #0.4
+  rnn_dropout_probability: 0.4
+revised2:
+  <<: *DEFAULT
+  rnn_size: 4
+  n_units_dense: 64
+  flipped_architecture: True
+  n_filters: 8
+  n_layers: 4
+  pool_stride: 2
+  pooling_size: 3
+  learning_rate: 1e-4
+  kernel_regularizer_scale: 0.0
+  regularization: 5e-3
+  rnn_dropout: True
+  rnn_dropout_probability: 0.2
 small:
   <<: *DEFAULT
   time_steps: 5
@@ -47,3 +61,4 @@ small:
   n_units_dense: 16
   n_layers: 5
   n_filters: 32
+
