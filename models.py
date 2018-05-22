@@ -15,7 +15,7 @@ class CRNN:
                                  use_bias=False,  # DUE TO ERROR WHEN NOT HAVING
                                  padding='valid',
                                  activation=self.p.activation,
-                                 kernel_regularizer=tf.contrib.layers.l2_regularizer(self.p.kernel_regularizer_scale),
+                                 #kernel_regularizer=tf.contrib.layers.l2_regularizer(self.p.kernel_regularizer_scale),
                                  #kernel_regularizer=self.p.kernel_regularizer,
                                  kernel_initializer=self.p.kernel_initializer)
         return conv
