@@ -2,7 +2,7 @@ local: &DEFAULT
   save_checkpoint_steps: 50
   save_summary_steps: 50
   buffer_size: 1
-  train_steps:
+  train_steps: 50
   eval_steps: 10
   verbose_shapes: True
   training_hook_n_iter: 25

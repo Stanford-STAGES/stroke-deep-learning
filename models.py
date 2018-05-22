@@ -179,6 +179,7 @@ class CRNN:
                 y = tf.reshape(tf.tile(labels, (1, self.p.time_steps)), (-1, 2))
                 loss = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits_v2(logits=tf.reshape(logits,[-1,2]), labels=y))
                 true_classes = tf.argmax(y, 1)
+
             l2 = self.p.regularization * sum(
                 tf.nn.l2_loss(tf_var)
                 for tf_var in tf.trainable_variables()
@@ -213,11 +214,11 @@ class CRNN:
             eval_metric_ops = {
                 "accuracy": tf.metrics.accuracy(labels=true_classes, predictions=est_classes),
                 "auc": tf.metrics.auc(labels=true_classes, predictions=est_classes),
-                "fp": tf.metrics.false_positives(labels=true_classes, predictions=est_classes),
-                "fn": tf.metrics.false_negatives(labels=true_classes, predictions=est_classes),
-                "tp": tf.metrics.true_positives(labels=true_classes, predictions=est_classes),
-                "tn": tf.metrics.true_negatives(labels=true_classes, predictions=est_classes),
-            }
+                "precision": tf.metrics.precision(labels=true_classes, predictions=est_classes),
+                "recall": tf.metrics.recall(labels=true_classes, predictions=est_classes),
+                "sens_at_spec": tf.metrics.sensitivity_at_specificity(labels=true_classes, predictions=est_classes, specificity=0.6),
+                "spec_at_sens": tf.metrics.specificity_at_sensitivity(labels=true_classes, predictions=est_classes, sensitivity=0.6)
+                }
 
         # Configure the Training Op (for TRAIN mode)
         if mode == tf.estimator.ModeKeys.TRAIN:
