@@ -5,10 +5,11 @@ import tensorflow as tf
 from models import CRNN as Model
 from models import input_fn
 from shutil import rmtree
-from os import mkdir
-from collections import deque
-import numpy as np
-import sys
+from os import listdir
+import os
+#from collections import deque
+#import numpy as np
+#import sys
 
 parser = argparse.ArgumentParser(description='Train model baesd on setup of data and model storage, experimental setup, and hyper parameters from YAML-files of profiles.')
 parser.add_argument('--config', type=str, default='shhs',
@@ -21,7 +22,7 @@ parser.add_argument('--verbose', type=bool, default=True,
                     help='set verbosity of tf.logging (defaults to True)')
 
 # this is a string, and I can't remember why i did that, and haven't tested if it could be changed to a bool...
-parser.add_argument('--model_memory', type=str, default='False',
+parser.add_argument('--model_memory', type=str, default='True',
                     help='loads model with same profiles if it exists when True, if False deletes existing model (defaults to True)')
 parser.add_argument('--hparam', type=str, default=None,
                     help='comma-seperated hparams and value, overrides model parameters from profile (defaults to None), format e.g.: --hparams=learning_rate=0.3.')
@@ -50,7 +51,7 @@ if __name__ == "__main__":
     cf = Config(args.config,
                 args.experiment,
                 args.model,
-                args.hparam).get_configs(cross_validate = args.cross_validate)
+                args.hparam).get_configs(cross_validate=args.cross_validate)
 
     DataHandler.setup_partitions(config=cf,
                                  model_memory=eval(args.model_memory),
@@ -64,26 +65,28 @@ if __name__ == "__main__":
             model_dir=cf.eparams.ckptdir,
             config=run_config)
 
-    if args.verbose: tf.logging.set_verbosity(tf.logging.INFO)
+    if args.verbose:
+        tf.logging.set_verbosity(tf.logging.INFO)
 
     if args.good_start:
         restart_flag = True
         starts = 1
         while restart_flag:
-            if args.cross_validate:
-                base_dir = cf.eparams.ckptdir[:-4]
-            else:
-                base_dir = cf.eparams.ckptdir
-            print('Removing existing model: {}'.format(base_dir))
-            rmtree(base_dir)
-            mkdir(base_dir)
+            files = listdir(cf.eparams.ckptdir)
+            for file in files:
+                if file != 'partitions.pkl':
+                    if os.path.isfile(file):
+                        os.remove(file)
+                    elif os.path.isdir(file):
+                        rmtree(file)
+            print('Removing existing model: {}'.format(cf.eparams.ckptdir))
             classifier.train(input_fn=lambda: input_fn('train', cf.eparams),steps=500)
-            result = classifier.evaluate(input_fn=lambda: input_fn('val', cf.eparams), steps=500)
+            result = classifier.evaluate(input_fn=lambda: input_fn('val', cf.eparams), steps=200)
             restart_flag = True if result['accuracy'] < 0.55 else False
             starts += 1
             if starts > 5:
                 restart_flag = False
-                print('Reached max restarts, continuing even if poor accuracy achived.')
+                print('Reached max restarts, continuing even if poor accuracy achieved.')
 
     if not args.dont_train:
         train_spec = tf.estimator.TrainSpec(input_fn=lambda: input_fn('train', cf.eparams),
