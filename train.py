@@ -84,7 +84,7 @@ if __name__ == "__main__":
             result = classifier.evaluate(input_fn=lambda: input_fn('val', cf.eparams), steps=200)
             restart_flag = True if result['accuracy'] < 0.55 else False
             starts += 1
-            if starts > 5:
+            if starts > 20:
                 restart_flag = False
                 print('Reached max restarts, continuing even if poor accuracy achieved.')
 
