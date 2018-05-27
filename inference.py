@@ -18,11 +18,20 @@ parser.add_argument('--model', type=str, default='simple',
                     help='name of model/hyperparameter profile to use (defaults to default, defined in params.yaml)')
 parser.add_argument('--hparam', type=str, default=None,
                     help='comma-seperated hparams and value, overrides model parameters from profile (defaults to None), format e.g.: --hparams=learning_rate=0.3.')
+parser.add_argument('--cross_validate', type=int, default=None,
+                    help='if True run inference one of 9 CV models')
 args = parser.parse_args()
 
 if __name__ == "__main__":
-    cf = Config(args.config, args.experiment, args.model, args.hparam).get_configs(matched=True)
-    DataHandler.setup_partitions(cf, model_memory = True)
+    cf = Config(args.config,
+                args.experiment,
+                args.model,
+                args.hparam).get_configs(cross_validate=args.cross_validate,
+                                         matched=True)
+
+    DataHandler.setup_partitions(cf,
+                                 model_memory=True,
+                                 cross_validate=args.cross_validate)
 
     exports = [int(e) for e in os.listdir(cf.eparams.ckptdir) if e.isdigit()]
     export_dir = os.path.abspath(cf.eparams.ckptdir + str(exports[np.argmax(exports)]))
