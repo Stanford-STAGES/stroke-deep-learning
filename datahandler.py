@@ -45,7 +45,7 @@ class DataHandler(object):
                 with open(config.eparams.ckptdir + 'partitions.pkl', 'rb') as f:
                     cls.partitions = pickle.load(f)
             else:
-                n_folds = 5
+                n_folds = 9
                 y = [v for v in cls.labels.values()]
                 ids = [k for k in cls.labels.keys()]
 
@@ -67,7 +67,7 @@ class DataHandler(object):
 
 
                 division = []
-                base = [0,1,2,3,4]
+                base = np.arange(0,n_folds).tolist() #[0,1,2,3,4,5,6,7,8,9]
                 for n in range(n_folds):
                     division.append(base[n:] + base[:n])
 
@@ -76,9 +76,9 @@ class DataHandler(object):
                 for i in range(n_folds):
                     # Save determined partitions
                     idx = division[i]
-                    partitions = {'train': flatten([fold_ids[e] for e in idx[0:3]]),
-                                      'test': fold_ids[idx[3]],
-                                      'val': fold_ids[idx[4]]}
+                    partitions = {'train': flatten([fold_ids[e] for e in idx[0:n_folds-2]]),
+                                      'test': fold_ids[idx[n_folds-2]],
+                                      'val': fold_ids[idx[n_folds-1]]}
                     partitions_dicts.append(partitions)
 
                 cls.partitions = partitions_dicts[cross_validate-1]
@@ -198,7 +198,7 @@ class DataHandler(object):
         idx = self.current_epoch[id]
         if self.n_epochs[id]-1 == idx:
             if self.subset == 'train' or self.subset == 'val':
-                print('Reshuffling for: ' + id)
+                #print('Reshuffling for: ' + id)
                 np.random.shuffle(DataHandler.epoch_order[id])
                 DataHandler.current_epoch[id] = 0
                 DataHandler.n_shuffles[id] += 1
