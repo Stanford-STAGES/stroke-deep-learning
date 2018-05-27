@@ -22,6 +22,15 @@ parser.add_argument('--cross_validate', type=int, default=None,
                     help='if True run inference one of 9 CV models')
 args = parser.parse_args()
 
+def serving_input_receiver_fn():
+    '''
+    Serving input receiver function for tf.Estimator.export_savedmodel
+    :return: a TensorServingInputReceiver fitting the input data specified in cf.hparams
+    '''
+    features = tf.placeholder(shape=[None, cf.hparams.n_epoch_samples, cf.hparams.n_channels], dtype=tf.float32)
+    receiver_tensors = features
+    return tf.estimator.export.TensorServingInputReceiver(features, receiver_tensors)
+
 if __name__ == "__main__":
     cf = Config(args.config,
                 args.experiment,
@@ -32,6 +41,19 @@ if __name__ == "__main__":
     DataHandler.setup_partitions(cf,
                                  model_memory=True,
                                  cross_validate=args.cross_validate)
+
+    run_config = tf.estimator.RunConfig(save_checkpoints_steps=cf.eparams.save_checkpoint_steps,
+                                        save_summary_steps=cf.eparams.save_summary_steps)
+
+    model = Model('CRNN', cf.eparams)
+
+    classifier = tf.estimator.Estimator(
+        model_fn=lambda features, labels, mode: model(features, labels, mode, cf.hparams),
+        model_dir=cf.eparams.ckptdir,
+        config=run_config)
+
+    classifier.export_savedmodel(export_dir_base=cf.eparams.ckptdir,
+                                 serving_input_receiver_fn=serving_input_receiver_fn)
 
     exports = [int(e) for e in os.listdir(cf.eparams.ckptdir) if e.isdigit()]
     export_dir = os.path.abspath(cf.eparams.ckptdir + str(exports[np.argmax(exports)]))
