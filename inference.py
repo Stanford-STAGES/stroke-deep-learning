@@ -5,6 +5,7 @@ import numpy as np
 import pandas as pd
 from tensorflow.contrib import predictor
 from models import input_fn
+from models import CRNN as Model
 from datahandler import DataHandler
 from config import Config
 import pickle
@@ -87,11 +88,20 @@ if __name__ == "__main__":
 
     with tf.Session() as sess:
         for id in valIDs:
-            val_group[id], val_probs[id] = run_inference(id, 'val_id')
+            try:
+                val_group[id], val_probs[id] = run_inference(id, 'val_id')
+            except:
+                print('{}: error processing {}'.format('val_id', id))
         for id in testIDs:
-            test_group[id], test_probs[id] = run_inference(id, 'test_id')
+            try:
+                test_group[id], test_probs[id] = run_inference(id, 'test_id')
+            except:
+                print('{}: error processing {}'.format('test_id', id))
         for id in matchedIDs:
-            matched_group[id], matched_probs[id] = run_inference(id, 'matched_id')
+            try:
+                matched_group[id], matched_probs[id] = run_inference(id, 'matched_id')
+            except:
+                print('{}: error processing {}'.format('matched_id', id))
 
     with open(cf.eparams.ckptdir + 'eval/probabilities.pkl', 'wb') as f:
         pickle.dump([val_group, val_probs, test_group, test_probs, matched_probs, matched_group], f)
