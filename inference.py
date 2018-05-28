@@ -60,20 +60,29 @@ if __name__ == "__main__":
     export_dir = os.path.abspath(cf.eparams.ckptdir + str(exports[np.argmax(exports)]))
     predict_fn = predictor.from_saved_model(export_dir)
 
+    trainIDs = DataHandler.partitions['train']
     valIDs = DataHandler.partitions['val']
     testIDs = DataHandler.partitions['test']
     matchedIDs = DataHandler.partitions['matched']
 
+    train_probs = {}
+    train_group = {}
     val_probs = {}
     val_group = {}
+    #val_feat = {}
     test_probs = {}
     test_group = {}
+    #test_feat = {}
     matched_probs = {}
     matched_group = {}
+    #matched_feat = {}
 
     def run_inference(id, partition):
         features, labels = input_fn(partition, cf.eparams, id)
         prob = []
+        #feat = []
+        #exp_sens = []
+        #con_sens = []
         while True:
             try:
                 # this will break when input_fn can't make a full 16 times 5 min input
@@ -81,12 +90,20 @@ if __name__ == "__main__":
                 x, y = sess.run([features, labels])
                 predictions = predict_fn({"input": x})
                 prob.append(np.transpose(predictions['probabilities'][:, 1]))
+                #feat.append(np.transpose(predictions['features'][:, 1]))
+                #ex_sens.append(np.transpose(predictions['experimental_sensitivity'][:, 1]))
+                #con_sens.append(np.transpose(predictions['control_sensitivity'][:, 1]))
             except:
                 print('{}: done processing {}'.format(partition, id))
                 break
         return np.argmax(y[0,:]), np.reshape(np.asarray(prob), [-1])
 
     with tf.Session() as sess:
+        for id in trainIDs:
+            try:
+                train_group[id], train_probs[id] = run_inference(id, 'train_id')
+            except:
+                print('{}: error processing {}'.format('val_id', id))
         for id in valIDs:
             try:
                 val_group[id], val_probs[id] = run_inference(id, 'val_id')
@@ -104,4 +121,4 @@ if __name__ == "__main__":
                 print('{}: error processing {}'.format('matched_id', id))
 
     with open(cf.eparams.ckptdir + 'eval/probabilities.pkl', 'wb') as f:
-        pickle.dump([val_group, val_probs, test_group, test_probs, matched_probs, matched_group], f)
+        pickle.dump([train_group, train_probs, val_group, val_probs, test_group, test_probs, matched_probs, matched_group], f)
