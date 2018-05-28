@@ -9,13 +9,14 @@ from models import CRNN as Model
 from datahandler import DataHandler
 from config import Config
 import pickle
+import traceback
 
 parser = argparse.ArgumentParser(description='Evaluate a stored model.')
-parser.add_argument('--config', type=str, default='local',
+parser.add_argument('--config', type=str, default='shhs',
                     help='name of storage configuration profile to use (defaults to local, defined in config.yaml)')
-parser.add_argument('--experiment', type=str, default='basic',
+parser.add_argument('--experiment', type=str, default='local',
                     help='name of experimental profile to use (defaults to basis, defined in experiment.yaml)')
-parser.add_argument('--model', type=str, default='simple',
+parser.add_argument('--model', type=str, default='shallow',
                     help='name of model/hyperparameter profile to use (defaults to default, defined in params.yaml)')
 parser.add_argument('--hparam', type=str, default=None,
                     help='comma-seperated hparams and value, overrides model parameters from profile (defaults to None), format e.g.: --hparams=learning_rate=0.3.')
@@ -67,20 +68,21 @@ if __name__ == "__main__":
 
     train_probs = {}
     train_group = {}
+    train_feat = {}
     val_probs = {}
     val_group = {}
-    #val_feat = {}
+    val_feat = {}
     test_probs = {}
     test_group = {}
-    #test_feat = {}
+    test_feat = {}
     matched_probs = {}
     matched_group = {}
-    #matched_feat = {}
+    matched_feat = {}
 
     def run_inference(id, partition):
         features, labels = input_fn(partition, cf.eparams, id)
         prob = []
-        #feat = []
+        feat = []
         #exp_sens = []
         #con_sens = []
         while True:
@@ -90,39 +92,40 @@ if __name__ == "__main__":
                 x, y = sess.run([features, labels])
                 predictions = predict_fn({"input": x})
                 prob.append(np.transpose(predictions['probabilities'][:, 1]))
-                #feat.append(np.transpose(predictions['features'][:, 1]))
+                feat.append(np.transpose(predictions['features']))
                 #ex_sens.append(np.transpose(predictions['experimental_sensitivity'][:, 1]))
                 #con_sens.append(np.transpose(predictions['control_sensitivity'][:, 1]))
             except:
                 print('{}: done processing {}'.format(partition, id))
                 break
-        return np.argmax(y[0,:]), np.reshape(np.asarray(prob), [-1])
+        features = np.reshape(np.transpose(np.asarray(feat), [0, 2, 1]), [len(feat)*16, -1])
+        return np.argmax(y[0,:]), np.reshape(np.asarray(prob), [-1]), features
 
     with tf.Session() as sess:
         for id in trainIDs:
             try:
-                train_group[id], train_probs[id] = run_inference(id, 'train_id')
+                train_group[id], train_probs[id], train_feat[id] = run_inference(id, 'train_id')
             except Exception as e:
                 print(e)
                 print(traceback.format_exc())
                 print('{}: error processing {}'.format('train_id', id))
         for id in valIDs:
             try:
-                val_group[id], val_probs[id] = run_inference(id, 'val_id')
+                val_group[id], val_probs[id], val_feat[id] = run_inference(id, 'val_id')
             except Exception as e:
                 print(e)
                 print(traceback.format_exc())
                 print('{}: error processing {}'.format('val_id', id))
         for id in testIDs:
             try:
-                test_group[id], test_probs[id] = run_inference(id, 'test_id')
+                test_group[id], test_probs[id], test_feat[id] = run_inference(id, 'test_id')
             except Exception as e:
                 print(e)
                 print(traceback.format_exc())
                 print('{}: error processing {}'.format('test_id', id))
         for id in matchedIDs:
             try:
-                matched_group[id], matched_probs[id] = run_inference(id, 'matched_id')
+                matched_group[id], matched_probs[id], matched_feat[id] = run_inference(id, 'matched_id')
             except Exception as e:
                 print(e)
                 print(traceback.format_exc())
@@ -130,3 +133,8 @@ if __name__ == "__main__":
 
     with open(cf.eparams.ckptdir + 'eval/probabilities.pkl', 'wb') as f:
         pickle.dump([train_group, train_probs, val_group, val_probs, test_group, test_probs, matched_probs, matched_group], f)
+
+    with open(cf.eparams.ckptdir + 'eval/features.pkl', 'wb') as f:
+        pickle.dump(
+            [train_group, train_feat, val_group, val_feat, test_group, test_feat, matched_feat, matched_group],
+            f)
