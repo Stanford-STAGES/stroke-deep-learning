@@ -102,22 +102,30 @@ if __name__ == "__main__":
         for id in trainIDs:
             try:
                 train_group[id], train_probs[id] = run_inference(id, 'train_id')
-            except:
-                print('{}: error processing {}'.format('val_id', id))
+            except Exception as e:
+                print(e)
+                print(traceback.format_exc())
+                print('{}: error processing {}'.format('train_id', id))
         for id in valIDs:
             try:
                 val_group[id], val_probs[id] = run_inference(id, 'val_id')
-            except:
+            except Exception as e:
+                print(e)
+                print(traceback.format_exc())
                 print('{}: error processing {}'.format('val_id', id))
         for id in testIDs:
             try:
                 test_group[id], test_probs[id] = run_inference(id, 'test_id')
-            except:
+            except Exception as e:
+                print(e)
+                print(traceback.format_exc())
                 print('{}: error processing {}'.format('test_id', id))
         for id in matchedIDs:
             try:
                 matched_group[id], matched_probs[id] = run_inference(id, 'matched_id')
-            except:
+            except Exception as e:
+                print(e)
+                print(traceback.format_exc())
                 print('{}: error processing {}'.format('matched_id', id))
 
     with open(cf.eparams.ckptdir + 'eval/probabilities.pkl', 'wb') as f:
