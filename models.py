@@ -248,6 +248,8 @@ def input_fn(mode, params, ID = None, path = None):
         gen = DataHandler(mode).generate_batches
     elif mode == 'test_sequence':
         gen = DataHandler('test').generate_sequence
+    elif mode == 'train_id':
+        gen = DataHandler('train', ID).generate_sequence_ID
     elif mode == 'val_id':
         gen = DataHandler('val', ID).generate_sequence_ID
     elif mode == 'test_id':
