@@ -462,3 +462,55 @@ if visualize_std:
                                 right=.90, top=.90,
                                 wspace=.1, hspace=.1)
         plt.show()
+
+
+
+
+
+
+
+
+'''
+NOTES FOR EARLY STOPPING
+    class MyHook(tf.train.SessionRunHook):
+
+        def begin(self):
+            self._global_step_tensor = tf.train.get_or_create_global_step()
+
+        def before_run(self, run_context):
+            requests = {"global_step": self._global_step_tensor}
+            return tf.train.SessionRunArgs(requests)
+
+        def after_run(self, run_context, run_values):
+            #print(run_values)
+            global_step = run_values.results["global_step"]
+            print(global_step)
+            #if 0:  # tf.global_step == 5:
+            #run_context.request_stop()
+    hook = MyHook()
+    
+    
+    
+    loss_buffer_size = 5
+    l = deque(np.ones([loss_buffer_size]))
+    smoothed_loss_values = np.ones([2])
+    tolerance = 1e-2
+    early_stop_criterion = False
+    iteration = 0
+    max_steps = 1e4
+    max_iterations = max_steps // cf.eparams.train_steps
+    while (not early_stop_criterion) and (iteration < max_iterations):
+        classifier.train(input_fn=lambda: input_fn('train', cf.eparams), steps=cf.eparams.train_steps)
+        eval_results = classifier.evaluate(input_fn=lambda: input_fn('val', cf.eparams), steps=cf.eparams.eval_steps)
+        print(eval_results['loss'])
+        smoothed_loss_values[0] = np.mean(l)
+        l.popleft()
+        l.append(eval_results['loss'])
+        smoothed_loss_values[1] = np.mean(l)
+        iteration += 1
+        early_stop_criterion = (smoothed_loss_values[0]-smoothed_loss_values[1]) < tolerance
+    print(smoothed_loss_values)
+    print(early_stop_criterion)
+    print(iteration)
+    print(l)
+'''
