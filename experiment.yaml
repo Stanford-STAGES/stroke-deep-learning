@@ -2,7 +2,7 @@ local: &DEFAULT
   save_checkpoint_steps: 50
   save_summary_steps: 50
   buffer_size: 1
-  train_steps: 50
+  train_steps:
   eval_steps: 10
   verbose_shapes: True
   training_hook_n_iter: 25
@@ -14,7 +14,8 @@ cluster:
   <<: *DEFAULT
   save_checkpoint_steps: 100
   save_summary_steps: 100
-  train_steps: 
-  throttle_secs: 120
+  train_steps:
+  eval_steps: 200 
+  throttle_secs: 360
   buffer_size: 50
   batch_size: {'train': 8, 'val': 8, 'test': 8}
