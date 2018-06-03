@@ -16,7 +16,7 @@ parser.add_argument('--config', type=str, default='shhs',
                     help='name of storage configuration profile to use (defaults to local, defined in config.yaml)')
 parser.add_argument('--experiment', type=str, default='local',
                     help='name of experimental profile to use (defaults to basis, defined in experiment.yaml)')
-parser.add_argument('--model', type=str, default='shallow',
+parser.add_argument('--model', type=str, default='small',
                     help='name of model/hyperparameter profile to use (defaults to default, defined in params.yaml)')
 parser.add_argument('--hparam', type=str, default=None,
                     help='comma-seperated hparams and value, overrides model parameters from profile (defaults to None), format e.g.: --hparams=learning_rate=0.3.')
@@ -34,6 +34,7 @@ def serving_input_receiver_fn():
     return tf.estimator.export.TensorServingInputReceiver(features, receiver_tensors)
 
 if __name__ == "__main__":
+
     cf = Config(args.config,
                 args.experiment,
                 args.model,
@@ -43,7 +44,7 @@ if __name__ == "__main__":
     DataHandler.setup_partitions(cf,
                                  model_memory=True,
                                  cross_validate=args.cross_validate)
-
+    
     run_config = tf.estimator.RunConfig(save_checkpoints_steps=cf.eparams.save_checkpoint_steps,
                                         save_summary_steps=cf.eparams.save_summary_steps)
 
@@ -56,9 +57,10 @@ if __name__ == "__main__":
 
     classifier.export_savedmodel(export_dir_base=cf.eparams.ckptdir,
                                  serving_input_receiver_fn=serving_input_receiver_fn)
-
+    
     exports = [int(e) for e in os.listdir(cf.eparams.ckptdir) if e.isdigit()]
     export_dir = os.path.abspath(cf.eparams.ckptdir + str(exports[np.argmax(exports)]))
+
     predict_fn = predictor.from_saved_model(export_dir)
 
     trainIDs = DataHandler.partitions['train']
@@ -93,12 +95,14 @@ if __name__ == "__main__":
                 predictions = predict_fn({"input": x})
                 prob.append(np.transpose(predictions['probabilities'][:, 1]))
                 feat.append(np.transpose(predictions['features']))
-                #ex_sens.append(np.transpose(predictions['experimental_sensitivity'][:, 1]))
+                #exp_sens.append(np.transpose(predictions['experimental_sensitivity'][:, 1]))
                 #con_sens.append(np.transpose(predictions['control_sensitivity'][:, 1]))
             except:
                 print('{}: done processing {}'.format(partition, id))
                 break
         features = np.reshape(np.transpose(np.asarray(feat), [0, 2, 1]), [len(feat)*16, -1])
+        #exp_td = np.reshape(np.transpose(np.asarray(exp_sens), [0, 2, 1]), [len(exp_sens)*16, -1])
+        #con_td = np.reshape(np.transpose(np.asarray(con_sens), [0, 2, 1]), [len(con_sens)*16, -1])
         return np.argmax(y[0,:]), np.reshape(np.asarray(prob), [-1]), features
 
     with tf.Session() as sess:
