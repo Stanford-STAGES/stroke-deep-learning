@@ -145,9 +145,9 @@ class CRNN:
             if self.p.one_output_per_epoch:
                 l = tf.expand_dims(logits, 1)
 
-                ylist = [l[:, time, 0] for time in range(1)]
+                ylist = [l[:, 0, 0] for time in range(self.p.time_steps)]
                 control_sensitivity = self.__sensitivity_analysis(xlist, ylist)
-                ylist = [l[:, time, 1] for time in range(1)]
+                ylist = [l[:, 0, 1] for time in range(self.p.time_steps)]
                 experimental_sensitivity = self.__sensitivity_analysis(xlist, ylist)
 
                 predictions["experimental_sensitivity"] = experimental_sensitivity
@@ -264,49 +264,49 @@ def input_fn(mode, params, ID = None, path = None):
     # todo implement reading and indexing going on in generator as map and use map_and_batch
     return ds.make_one_shot_iterator().get_next()
 
-    '''
-        with tf.name_scope('activation_maximization'):
-            X_p = tf.get_variable('X_p',
-                shape = [self.n_classes, self.n_channels, self.time_steps, 1, self.n_sub_epoch_samples],
-                initializer=tf.random_normal_initializer(0))
-            if self.verbose_shapes: print('X_p: {}'.format(X_p.shape))
-            X_mean = tf.placeholder(tf.float32,
-                shape = [self.n_classes, self.n_channels, self.time_steps, 1, self.n_sub_epoch_samples],
-                                    name='X_mean')
-            Spectra = tf.placeholder(tf.float32,
-                shape = [self.n_classes, self.n_channels, self.n_sub_epoch_samples//2+1],
-                                    name='Spectra')
+'''
+with tf.name_scope('activation_maximization'):
+X_p = tf.get_variable('X_p',
+    shape = [self.n_classes, self.n_channels, self.time_steps, 1, self.n_sub_epoch_samples],
+    initializer=tf.random_normal_initializer(0))
+if self.verbose_shapes: print('X_p: {}'.format(X_p.shape))
+X_mean = tf.placeholder(tf.float32,
+    shape = [self.n_classes, self.n_channels, self.time_steps, 1, self.n_sub_epoch_samples],
+                        name='X_mean')
+Spectra = tf.placeholder(tf.float32,
+    shape = [self.n_classes, self.n_channels, self.n_sub_epoch_samples//2+1],
+                        name='Spectra')
 
-            Spectra_p = tf.squeeze( tf.square( tf.abs( tf.spectral.rfft(X_p ) ) ) )
+Spectra_p = tf.squeeze( tf.square( tf.abs( tf.spectral.rfft(X_p ) ) ) )
 
-            lambda_p = tf.placeholder_with_default(0.00001, shape=[], name='lambda_p')
-            theta_p = tf.placeholder_with_default(0.00001, shape=[], name='theta_p')
-            ypsilon_p = tf.placeholder_with_default(0.00001, shape=[], name='ypsilon_p')
+lambda_p = tf.placeholder_with_default(0.00001, shape=[], name='lambda_p')
+theta_p = tf.placeholder_with_default(0.00001, shape=[], name='theta_p')
+ypsilon_p = tf.placeholder_with_default(0.00001, shape=[], name='ypsilon_p')
 
-            extracted_features_p = self.__network(input=X_p, reuse=True)
-            logits_p = self.__output_layer(input = extracted_features_p, reuse=True)
+extracted_features_p = self.__network(input=X_p, reuse=True)
+logits_p = self.__output_layer(input = extracted_features_p, reuse=True)
 
-            y_p = tf.one_hot(tf.cast(tf.lin_space(0., self.n_classes-1, self.n_classes), tf.int32), depth=self.n_classes)
+y_p = tf.one_hot(tf.cast(tf.lin_space(0., self.n_classes-1, self.n_classes), tf.int32), depth=self.n_classes)
 
-            cost_p = tf.reduce_mean(
-                tf.nn.softmax_cross_entropy_with_logits_v2(logits=logits_p,
-                                                        labels=y_p))
-            cost_p += lambda_p * tf.reduce_sum(tf.abs(X_p))
-            cost_p += theta_p * tf.nn.l2_loss(X_p - X_mean)
-            cost_p += ypsilon_p * tf.nn.l2_loss(Spectra_p - Spectra)
+cost_p = tf.reduce_mean(
+    tf.nn.softmax_cross_entropy_with_logits_v2(logits=logits_p,
+                                            labels=y_p))
+cost_p += lambda_p * tf.reduce_sum(tf.abs(X_p))
+cost_p += theta_p * tf.nn.l2_loss(X_p - X_mean)
+cost_p += ypsilon_p * tf.nn.l2_loss(Spectra_p - Spectra)
 
-            lr_p = tf.placeholder_with_default(0.01, shape=[], name='lr_p')
-            opt_p = self.optimizer(learning_rate=lr_p).minimize(cost_p,var_list=[X_p])
+lr_p = tf.placeholder_with_default(0.01, shape=[], name='lr_p')
+opt_p = self.optimizer(learning_rate=lr_p).minimize(cost_p,var_list=[X_p])
 
-            tf.add_to_collection('prototype', X_p)
-            tf.add_to_collection('prototype', y_p)
-            tf.add_to_collection('prototype', logits_p)
-            tf.add_to_collection('prototype', cost_p)
-            tf.add_to_collection('prototype', opt_p)
-            tf.add_to_collection('prototype', lr_p)
-            tf.add_to_collection('prototype', lambda_p)
-            tf.add_to_collection('prototype', theta_p)
-            tf.add_to_collection('prototype', X_mean)
-            tf.add_to_collection('prototype', Spectra)
-            tf.add_to_collection('prototype', ypsilon_p)
-    '''
+tf.add_to_collection('prototype', X_p)
+tf.add_to_collection('prototype', y_p)
+tf.add_to_collection('prototype', logits_p)
+tf.add_to_collection('prototype', cost_p)
+tf.add_to_collection('prototype', opt_p)
+tf.add_to_collection('prototype', lr_p)
+tf.add_to_collection('prototype', lambda_p)
+tf.add_to_collection('prototype', theta_p)
+tf.add_to_collection('prototype', X_mean)
+tf.add_to_collection('prototype', Spectra)
+tf.add_to_collection('prototype', ypsilon_p)
+'''

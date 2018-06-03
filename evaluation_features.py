@@ -11,6 +11,7 @@ import traceback
 import seaborn as sns
 from collections import deque
 
+sns.set()
 path = '/home/rasmus/Desktop/c-shhs_cluster_shallowr_cv/'
 fold_folders = os.listdir(path)
 
@@ -21,6 +22,9 @@ senses_aggr = []
 speces_aggr = []
 accs_aggr = []
 
+senses_aggr_easy = []
+speces_aggr_easy = []
+accs_aggr_easy = []
 #sm_val = []
 #sm_test = []
 #ys_val = []
@@ -87,8 +91,8 @@ for fold in fold_folders:
 
         _,n_features = train_feat_exp[0].shape
         max_length = np.max([len(e) for e in train_feat_exp + train_feat_con + val_ft + matched_feat_train + matched_feat_test])
-        hidden_size = 16
-        batch_size_train = 32
+        hidden_size = 8
+        batch_size_train = 8
         tf.reset_default_graph()
         x = tf.placeholder(shape=(None, max_length, n_features), dtype=tf.float32)
         y = tf.placeholder(shape=(None, 2), dtype=tf.float32)
@@ -119,11 +123,12 @@ for fold in fold_folders:
                                  units=2)
 
         tv = tf.trainable_variables()
-        regularization_cost = 0.2 * tf.reduce_sum([tf.nn.l2_loss(v) for v in tv])
+        regularization_cost = 0.1 * tf.reduce_sum([tf.nn.l2_loss(v) for v in tv])
 
         cost = tf.reduce_mean(tf.nn.softmax_cross_entropy_with_logits_v2(logits=logit, labels=y)) + regularization_cost
 
-        optimizer = tf.train.AdamOptimizer(learning_rate=1e-4).minimize(cost)
+        optimizer = tf.train.AdamOptimizer(learning_rate=1e-3).minimize(cost)
+        #optimizer = tf.train.RMSPropOptimizer(learning_rate=1e-3).minimize(cost)
         pred = tf.argmax(logit,1)
         correct_pred = tf.equal(pred, tf.argmax(y,1))
         accuracy = tf.reduce_mean(tf.cast(correct_pred, tf.float32))
@@ -153,6 +158,15 @@ for fold in fold_folders:
                 y[i+n,1] = 1
             return unison_shuffled_copies(x,y)
 
+        '''
+        x_test_easy = np.zeros(shape=(len(train_feat_con)+len(train_feat_exp), max_length, n_features))
+        y_test_easy = np.zeros(shape=(len(train_feat_con)+len(train_feat_exp), 2))
+        y_test_easy[0:len(train_feat_con), 0] = 1
+        y_test_easy[len(train_feat_con):len(train_feat_exp), 1] = 1
+        for i, e in enumerate(train_feat_con + train_feat_exp):
+            n = len(e)
+            x_test_easy[i, 0:n, :] = e
+        '''
 
         x_test = np.zeros(shape=(n_exp*2, max_length, n_features))
         y_test = np.zeros(shape=(n_exp*2, 2))
@@ -175,7 +189,8 @@ for fold in fold_folders:
         #training_steps = 300 #1000
         display_step = 20
         buffer_length = 5
-        max_step = 3000
+        #max_step = 3000
+        max_step = 100
         tol = 1e-1
         patience = 2
         with tf.Session() as sess:
@@ -189,7 +204,7 @@ for fold in fold_folders:
                 #batch_x, batch_y = gen_data(train_feat_exp, train_feat_con, batch_size_train, max_length, n_features)
                 batch_x, batch_y = gen_data(train_feat_exp, matched_feat_train, batch_size_train, max_length, n_features)
                 # Run optimization op (backprop)
-                sess.run(optimizer, feed_dict={x: batch_x, y: batch_y, prob: 0.5})
+                sess.run(optimizer, feed_dict={x: batch_x, y: batch_y, prob: 0.4})
                 if step % display_step == 0 or step == 1:
                     acc, loss = sess.run([accuracy, cost], feed_dict={x: batch_x, y: batch_y})
                     acc_val, loss_val = sess.run([accuracy, cost], feed_dict = {x: x_val, y: y_val, prob: 1.0})
@@ -216,7 +231,10 @@ for fold in fold_folders:
             #for step in range(10):
             #    batch_x, batch_y = gen_data(train_prob_exp, train_prob_con, batch_size_train, max_length)
             #    sess.run(optimizer, feed_dict={x: batch_x, y: batch_y, prob: 0.1})
+
+            x_test_easy, y_test_easy = gen_data(train_feat_exp, train_feat_con, batch_size_train, max_length, n_features)
             acc_val, softmax_val = sess.run([accuracy, softmax], feed_dict = {x: x_val, y: y_val, prob: 1.0})
+            acc_test_easy, softmax_test_easy = sess.run([accuracy, softmax], feed_dict={x: x_test_easy, y: y_test_easy, prob: 1.0})
             acc_test, softmax_test = sess.run([accuracy, softmax], feed_dict = {x: x_test, y: y_test, prob: 1.0})
 
         #sm_val.append(softmax_val)
@@ -225,9 +243,13 @@ for fold in fold_folders:
         #ys_test.append(y_test)
 
         fpr_val, tpr_val, thress_val = roc_curve(np.argmax(y_val,axis=1), softmax_val[:,1])
+        fpr_test_easy, tpr_test_easy, thress_test_easy = roc_curve(np.argmax(y_test_easy,axis=1), softmax_test_easy[:,1])
         fpr_test, tpr_test, thress_test = roc_curve(np.argmax(y_test,axis=1), softmax_test[:,1])
+
         auc_val = auc(fpr_val, tpr_val)
         auc_test = auc(fpr_test, tpr_test)
+        auc_test_easy = auc(fpr_test_easy, tpr_test_easy)
+
         f1s_original = []
         for t in thress_val:
             f1s_original.append(f1_score(y_true=np.argmax(y_val,axis=1), y_pred=np.asarray(softmax_val[:,1] > t, dtype=np.float32)))
@@ -280,59 +302,59 @@ for fold in fold_folders:
         best_t_idx = np.nanargmax(index)
         #best_t_idx = np.nanargmax(f1s_m)
         best_t = thress_val[best_t_idx]
+
+        test_accuracy_easy = accuracy_score(y_true=np.argmax(y_test_easy, axis=1),
+                                       y_pred=np.asarray(softmax_test_easy[:, 1] > best_t, dtype=np.float32))
+        tn, fp, fn, tp = metrics.confusion_matrix(np.argmax(y_test_easy, axis=1), softmax_test_easy[:, 1] > best_t).ravel()
+        test_sensitivity_easy = tp / (tp + fn)
+        test_specificity_easy = 1 - (fp / (tn + fp))
+
+        accs_aggr_easy.append(test_accuracy_easy)
+        senses_aggr_easy.append(test_sensitivity_easy)
+        speces_aggr_easy.append(test_specificity_easy)
+
         test_accuracy = accuracy_score(y_true=np.argmax(y_test,axis=1), y_pred=np.asarray(softmax_test[:,1] > best_t, dtype=np.float32))
         tn, fp, fn, tp = metrics.confusion_matrix(np.argmax(y_test, axis=1), softmax_test[:, 1] > best_t).ravel()
         test_sensitivity = tp / (tp + fn)
         test_specificity = 1 - (fp / (tn+fp))
 
-
         accs_aggr.append(test_accuracy)
         senses_aggr.append(test_sensitivity)
         speces_aggr.append(test_specificity)
-        '''
-        fig, ax = plt.subplots(ncols=2)
-        lw = 2
-        ax[0].plot(fpr_val, tpr_val, '--', color='gray',
-                   lw=lw,
-                   label='Validation set, AUC: {:.2f}'.format(auc_val))
-        ax[0].plot(fpr_test, tpr_test, color='black',
-                   lw=lw,
-                   label='Test, AUC: {:.2f}, acc.: {:.2f}, sens.: {:.2f}, spec.: {:.2f}'.format(auc_test,
-                                                                                                        test_accuracy,
-                                                                                                        test_sensitivity,
-                                                                                                        test_specificity,))
-        '''
+
         lw = 2
         a = (fold_number - 1) // 3
         b = (fold_number - 1) % 3
-        #rocs[a,b].plot([0, 1], [0, 1], color='black', lw=lw, linestyle='--')
-        rocs[a,b].set_xlim([0.0, 1.0])
-        rocs[a,b].set_ylim([0.0, 1.0])
-        rocs[a,b].set_xlabel('False Positive Rate')
-        rocs[a,b].set_ylabel('True Positive Rate')
-        rocs[a,b].set_title('Test ROC')
-        rocs[a,b].legend(loc="lower right")
 
-        #rocs[a,b].plot(fpr_val, tpr_val, '--', color='gray',
-        #           lw=lw,
-        #           label='Validation set, AUC: {:.2f}'.format(auc_val))
+
+        rocs[a,b].plot(fpr_test_easy, tpr_test_easy, '--', color='gray',
+                   lw=lw,
+                   label='Unmatched, AUC: {:.2f}'.format(auc_test_easy))
         rocs[a,b].plot(fpr_test, tpr_test, color='black',
                    lw=lw,
-                   label='Test, AUC: {:.2f}, acc.: {:.2f}, sens.: {:.2f}, spec.: {:.2f}'.format(auc_test,
+                   label='Matched, AUC: {:.2f}, acc.: {:.2f}, sens.: {:.2f}, spec.: {:.2f}'.format(auc_test,
                                                                                                 test_accuracy,
                                                                                                 test_sensitivity,
                                                                                                 test_specificity, ))
         rocs[a,b].plot([0, 1], [0, 1], color='black', lw=lw, linestyle='--')
+        rocs[a,b].set_title('Cross-validation fold {}'.format(fold_number))
+        rocs[a,b].legend(loc="lower right")
         rocs[a,b].set_xlim([0.0, 1.0])
         rocs[a,b].set_ylim([0.0, 1.0])
-        rocs[a,b].set_xlabel('False Positive Rate')
-        rocs[a,b].set_ylabel('True Positive Rate')
-        rocs[a,b].set_title('Test ROC: cv{}'.format(fold_number))
-        rocs[a,b].legend(loc="lower right")
+        rocs[a,b].set_xticks([0.0, 0.2, 0.4, 0.6, 0.8, 1.0])
+        rocs[a,b].set_yticks([0.0, 0.2, 0.4, 0.6, 0.8, 1.0])
+        if a == 2:
+            rocs[a,b].set_xlabel('False Positive Rate')
+        else:
+            rocs[a, b].set_xticklabels(['', '', '', '', '', ''])
+        if b == 0:
+            rocs[a,b].set_ylabel('True Positive Rate')
+        else:
+            rocs[a, b].set_yticklabels(['', '', '', '', '', ''])
+
         sns.set()
 
         f1s[a,b].plot(thress_val, f1s_m, color='black')
-
         f1s[a, b].plot(thress_val[best_t_idx], f1s_m[best_t_idx], 'or')
         f1s[a, b].set_title('F1-scores (validation, bootstrapped): {}'.format(fold_number))
         f1s[a, b].set_ylim([0.0, 1.0])
@@ -373,13 +395,19 @@ acc_mean = np.mean(test_accuracy_bootstraps_mean)
 acc_std = np.mean(test_accuracy_bootstraps_std)
 acc_mean_l = np.percentile(test_accuracy_bootstraps_mean, 2.5)
 acc_mean_u = np.percentile(test_accuracy_bootstraps_mean, 97.5)
-print('Test accuracy: {:.3} (CI: [{:.3}-{:.3}] +/- {:.3}'.format(acc_mean, acc_mean_l, acc_mean_u, acc_std))
+print('Test accuracy: {:.3} (CI: [{:.3}-{:.3}] +/- {:.3})'.format(acc_mean, acc_mean_l, acc_mean_u, acc_std))
+
 sens_mean = np.mean(test_sens_bootstraps_mean)
 sens_std = np.mean(test_sens_bootstraps_std)
-print('Test sensitivity: {:.3} +/- {:.3}'.format(sens_mean, sens_std))
+sens_mean_l = np.percentile(test_sens_bootstraps_mean, 2.5)
+sens_mean_u = np.percentile(test_sens_bootstraps_mean, 97.5)
+print('Test sens: {:.3} (CI: [{:.3}-{:.3}] +/- {:.3})'.format(sens_mean, sens_mean_l, sens_mean_u, sens_std))
+
 spec_mean = np.mean(test_spec_bootstraps_mean)
 spec_std = np.mean(test_spec_bootstraps_std)
-print('Test specificity: {:.3} +/- {:.3}'.format(spec_mean, spec_std))
+spec_mean_l = np.percentile(test_spec_bootstraps_mean, 2.5)
+spec_mean_u = np.percentile(test_spec_bootstraps_mean, 97.5)
+print('Test spec: {:.3} (CI: [{:.3}-{:.3}] +/- {:.3})'.format(spec_mean, spec_mean_l, spec_mean_u, spec_std))
 
 plt.show()
 
