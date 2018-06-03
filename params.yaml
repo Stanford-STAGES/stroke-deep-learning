@@ -2,6 +2,7 @@ default: &DEFAULT
   n_classes: 2
   time_steps: 60
   one_output_per_epoch: True
+  flipped_architecture: False
   n_layers: 4
   n_filters: 512
   temporal_kernel_size: 3
@@ -98,6 +99,12 @@ shallowrr: &BASIS
   rnn_dropout: True
   rnn_dropout_probability: 0.6
   optimizer: tf.train.AdamOptimizer
+small:
+  <<: *BASIS
+  rnn_size: 1
+  n_layers: 3
+  n_filters: 4
+  n_units_dense: 16
 shallowrr-rnn_size4:
   <<: *BASIS
   rnn_size: 4
