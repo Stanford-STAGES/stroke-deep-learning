@@ -1,3 +1,4 @@
+from __future__ import division
 import argparse
 from datahandler import DataHandler
 from config import Config
@@ -34,7 +35,7 @@ parser.add_argument('--dont_train', type=bool, default=False,
                     help='if True do not train (defaults to False)')
 parser.add_argument('--cross_validate', type=int, default=None,
                     help='if True train 5 models and do cross-validation')
-parser.add_argument('--good_start', type=bool, default=True,
+parser.add_argument('--good_start', type=bool, default=False,
                     help='if True restarts up to 5 times to get good start, works only with CV.')
 args = parser.parse_args()
 
