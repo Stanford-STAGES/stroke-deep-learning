@@ -2,7 +2,7 @@ import argparse
 import tensorflow as tf
 import os
 import numpy as np
-import pandas as pd
+#import pandas as pd
 from tensorflow.contrib import predictor
 from models import input_fn
 from models import CRNN as Model
