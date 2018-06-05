@@ -109,6 +109,10 @@ class CRNN:
             g = tf.convert_to_tensor(g)
         return tf.transpose(g, [1, 2, 0, 3, 4])
 
+    def __gaussian_noise_layer(self, input, std):
+        noise = tf.random_normal(shape=tf.shape(input), mean=0.0, stddev=std, dtype=tf.float32)
+        return input + noise
+
     def __call__(self, features, labels, mode, params, reuse=False):
         self.p = params
         self.training = True if mode == tf.estimator.ModeKeys.TRAIN else False
@@ -120,6 +124,8 @@ class CRNN:
             xlist = [subepoched[:,:,time,:,:] for time in range(self.p.time_steps)]
             X = tf.convert_to_tensor(xlist)
             X = tf.transpose(X, [1,2,0,3,4])
+            if self.training and self.p.noise_layer:
+                X = self.__gaussian_noise_layer(input=X, std=0.1)
             if self.verbose_shapes: print('X: {}'.format(X.shape))
 
         extracted_features = self.__network(input=X, reuse=reuse)
