@@ -8,11 +8,11 @@ import sys
 
 # todo: implement rejection of noise epochs
 debugging = False
-multimodal = False
+multimodal = True
 simulated_data = False
 rescale_mode = 'soft'
-#cohort = 'SHHS-Sherlock-matched'
-cohort = 'SHHS'
+cohort = 'SHHS-Sherlock-matched'
+#cohort = 'SHHS'
 
 if cohort == 'SSC':
     edf_folder = '/home/rasmus/Desktop/SSC/raw/edf/'
@@ -46,7 +46,7 @@ elif cohort == 'SHHS-Sherlock-matched':
     group = np.asarray(np.zeros(len(IDs)))
     if multimodal:
         channels_to_load = {'eeg1': 0, 'eeg2': 1, 'ecg': 2, 'pulse': 3}
-        output_folder = '/scratch/users/rmth/processed_shhs_data_multimodal/'
+        output_folder = '/scratch/users/rmth/processed_shhs_data_multimodal/matched_controls/'
         channel_alias = utils.read_channel_alias(output_folder+'signal_labels_multimodal.json')
     else:
         channels_to_load = {'eeg1': 0, 'eeg2': 1}
