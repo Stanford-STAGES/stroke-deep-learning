@@ -8,8 +8,8 @@ from models import input_fn
 from shutil import rmtree
 from os import listdir
 import os
-#from collections import deque
-#import numpy as np
+from collections import deque
+import numpy as np
 #import sys
 
 parser = argparse.ArgumentParser(description='Train model baesd on setup of data and model storage, experimental setup, and hyper parameters from YAML-files of profiles.')
@@ -35,8 +35,6 @@ parser.add_argument('--dont_train', type=bool, default=False,
                     help='if True do not train (defaults to False)')
 parser.add_argument('--cross_validate', type=int, default=None,
                     help='if True train 5 models and do cross-validation')
-parser.add_argument('--good_start', type=bool, default=False,
-                    help='if True restarts up to 5 times to get good start, works only with CV.')
 args = parser.parse_args()
 
 def serving_input_receiver_fn():
@@ -69,27 +67,60 @@ if __name__ == "__main__":
     if args.verbose:
         tf.logging.set_verbosity(tf.logging.INFO)
 
-    if args.good_start:
-        restart_flag = True
-        starts = 1
-        while restart_flag:
-            files = listdir(cf.eparams.ckptdir)
-            for file in files:
-                if file != 'partitions.pkl':
-                    if os.path.isfile(file):
-                        os.remove(file)
-                    elif os.path.isdir(file):
-                        rmtree(file)
-            print('Removing existing model: {}'.format(cf.eparams.ckptdir))
-            classifier.train(input_fn=lambda: input_fn('train', cf.eparams),steps=500)
-            result = classifier.evaluate(input_fn=lambda: input_fn('val', cf.eparams), steps=200)
-            restart_flag = True if result['accuracy'] < 0.55 else False
-            starts += 1
-            if starts > 20:
-                restart_flag = False
-                print('Reached max restarts, continuing even if poor accuracy achieved.')
-
     if not args.dont_train:
+        loss_buffer_size = 5
+        smoothed_loss_values = np.ones([2])
+        test_losses = []
+        tolerance = 1e-3
+        early_stop_criterion = False
+        iteration = 0
+        max_steps = 1e4
+        train_steps = 100
+        eval_steps = 500
+        min_iterations = 5
+        max_iterations = max_steps // train_steps
+        patience = 3
+        while True:
+            print('Doing iteration {} of train and eval steps.'.format(iteration))
+
+            print('Training:')
+            classifier.train(input_fn=lambda: input_fn('train', cf.eparams), steps=train_steps)
+
+            print('Evaluation:')
+            eval_results = classifier.evaluate(input_fn=lambda: input_fn('val', cf.eparams), steps=eval_steps)
+            print('Evaluational loss result: {}.'.format(eval_results['loss']))
+
+            if iteration == 0:
+                l = deque(eval_results['loss']*np.ones([loss_buffer_size]))
+
+            test_losses.append(eval_results['loss'])
+            smoothed_loss_values[0] = np.mean(l)
+            l.popleft()
+            l.append(eval_results['loss'])
+            smoothed_loss_values[1] = np.mean(l)
+            iteration += 1
+
+            print('    Loss  deque: {}'.format(l))
+            print('    Smoothed loss values: {}'.format(smoothed_loss_values))
+
+            if iteration < min_iterations:
+                continue
+                
+            early_stop_criterion = (smoothed_loss_values[1]-smoothed_loss_values[0]) > -tolerance
+            if early_stop_criterion:
+                patience -= 1
+                if patience == 0:
+                    print('    Reached early stopping criterion at {} iterations.'.format(iteration))
+                    break
+                else:
+                    print('    Patience reduced to: {}'.format(patience))
+            elif patience < 2:
+                patience += 1
+
+            if iteration > max_iterations:
+                print('    Reached maximum iterations.')
+                break
+        '''
         train_spec = tf.estimator.TrainSpec(input_fn=lambda: input_fn('train', cf.eparams),
                                             max_steps=cf.eparams.train_steps,
                                             hooks=[])
@@ -98,7 +129,8 @@ if __name__ == "__main__":
                                           throttle_secs=cf.eparams.throttle_secs,
                                           hooks=[])
         tf.estimator.train_and_evaluate(classifier, train_spec, eval_spec)
-
+        '''
+        
     if args.evaluate_model:
         result = classifier.evaluate(input_fn=lambda: input_fn('val', cf.eparams), steps=500)
 
