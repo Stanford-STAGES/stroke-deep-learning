@@ -37,14 +37,14 @@ def load_edf_file(filename, channels_to_load, cohort, channel_alias):
     if cohort == 'SSC':
         fs = fss[contained['C3']]
         n = f.getNSamples()[contained['C3']]
-    elif cohort == 'SHHS' or cohort == 'SHHS-Sherlock' or cohort=='SHHS-Sherlock-matched':
+    elif cohort == 'SHHS' or cohort == 'SHHS-Sherlock' or cohort=='SHHS-Sherlock-matched' or cohort == 'Simulated-Sherlock':
         fs = fss[contained['eeg1']] 
         #this should generally work, but "202345" was sampled at a different rate for that channel
         n = f.getNSamples()[contained['eeg2']]
     X = np.zeros((len(channels_to_load), n))
 
-    lowcut = .3
-    highcut = 40.
+    #lowcut = .3
+    #highcut = 40.
     for chan_name, chan_idx_in_file in contained.items():
         g = f.getPhysicalMaximum(chan_idx_in_file) / f.getDigitalMaximum(chan_idx_in_file)
         x = g*f.readSignal(chan_idx_in_file)
@@ -53,7 +53,8 @@ def load_edf_file(filename, channels_to_load, cohort, channel_alias):
             t = np.arange(0, len(x) / fss[chan_idx_in_file], 1 / fss[chan_idx_in_file])
             F = interp1d(t, x, kind='linear', fill_value = 'extrapolate')
             x = F(time)
-        X[channels_to_load[chan_name],:] = butter_bandpass_filter(x, lowcut, highcut, fs)
+        #print(x.shape)    
+        X[channels_to_load[chan_name],:] = x #butter_bandpass_filter(x, lowcut, highcut, fs, order = 16)
     data = {'x': X, 'fs': fs, 'labels': labels}
     return data
 
@@ -106,7 +107,7 @@ def rescale(x, fs, mode, window_duration = 5):
         new_x = 2*(x-q5)/(q95-q5) - 1
     return new_x
 
-def add_known_complex(x, fs, easy = False, window_duration = 3):
+def add_known_complex(x, fs, easy = False, window_duration = 3, group = None):
     if easy:
         M = np.round(fs * window_duration)
         g = gaussian(M, std=50)
@@ -116,32 +117,61 @@ def add_known_complex(x, fs, easy = False, window_duration = 3):
         for i in range(0, x.shape[1]):
             x[0, i, 100:100 + M] = x[0, i, 100:100 + M] + w
     else:
-        for i in range(0, x.shape[1]):
-            # Sine complex
-            M = np.round(fs * window_duration)
-            M = M + randi(-M,M)//2
-            g = gaussian(M, std=50)
-            t = np.arange(0, g.shape[0], 1) / fs
-            amplitude = randn(0,.5)+8
-            frequency = 10+randn(0,2)
-            z = np.sin(2 * np.pi * frequency * t) * amplitude
-            w = g * z
-            chan = randi(0,2)
-            start_index = randi(0, x.shape[2]-M)
-            x[chan, i, start_index:start_index + M] = x[chan, i, start_index:start_index + M] + w
+        if group == None:
+            for i in range(0, x.shape[1]):
+                # Sine complex
+                M = np.round(fs * window_duration)
+                M = M + randi(-M,M)//2
+                g = gaussian(M, std=50)
+                t = np.arange(0, g.shape[0], 1) / fs
+                amplitude = randn(0,.5)+8
+                frequency = 10+randn(0,2)
+                z = np.sin(2 * np.pi * frequency * t) * amplitude
+                w = g * z
+                chan = randi(0,2)
+                start_index = randi(0, x.shape[2]-M)
+                x[chan, i, start_index:start_index + M] = x[chan, i, start_index:start_index + M] + w
 
-            # Saw-tooth complex
-            M = np.round(fs * window_duration)
-            M = M + randi(-M, M) // 2
-            g = gaussian(M, std=100)
-            t = np.arange(0, g.shape[0], 1) / fs
-            amplitude = randn(0, .5) + 6
-            frequency = 2 + randn(0, .1)
-            z = sawtooth(2 * np.pi * frequency * t) * amplitude
-            w = g * z
-            chan = randi(0, 2)
-            start_index = randi(0, x.shape[2] - M)
-            x[chan, i, start_index:start_index + M] = x[chan, i, start_index:start_index + M] + w
+                # Saw-tooth complex
+                M = np.round(fs * window_duration)
+                M = M + randi(-M, M) // 2
+                g = gaussian(M, std=100)
+                t = np.arange(0, g.shape[0], 1) / fs
+                amplitude = randn(0, .5) + 6
+                frequency = 2 + randn(0, .1)
+                z = sawtooth(2 * np.pi * frequency * t) * amplitude
+                w = g * z
+                chan = randi(0, 2)
+                start_index = randi(0, x.shape[2] - M)
+                x[chan, i, start_index:start_index + M] = x[chan, i, start_index:start_index + M] + w
+        else:
+            for i in range(0, x.shape[1]):
+                if group == 0:
+                    # Sine complex
+                    M = np.round(fs * window_duration)
+                    M = int(M + randi(-M,M)//2)
+                    g = gaussian(M, std=50)
+                    t = np.arange(0, g.shape[0], 1) / fs
+                    amplitude = randn(0,.5)+8
+                    frequency = 10+randn(0,2)
+                    z = np.sin(2 * np.pi * frequency * t) * amplitude
+                    w = g * z
+                    chan = randi(0,2)
+                    start_index = randi(0, x.shape[2]-M)
+                    x[chan, i, start_index:start_index + M] = x[chan, i, start_index:start_index + M] + w
+                if group == 1:
+                    # Saw-tooth complex
+                    M = np.round(fs * window_duration)
+                    M = int(M + randi(-M, M) // 2)
+                    g = gaussian(M, std=100)
+                    t = np.arange(0, g.shape[0], 1) / fs
+                    amplitude = randn(0, .5) + 6
+                    frequency = 2 + randn(0, .1)
+                    z = sawtooth(2 * np.pi * frequency * t) * amplitude
+                    w = g * z
+                    chan = randi(0, 2)
+                    start_index = randi(0, x.shape[2] - M)
+                    x[chan, i, start_index:start_index + M] = x[chan, i, start_index:start_index + M] + w
     return x
 
 def determine_data_dimensions(data_folder):
