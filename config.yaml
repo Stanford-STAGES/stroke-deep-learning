@@ -17,6 +17,12 @@ shhs-multimodal:
 c-shhs:
   <<: *CDEFAULT
   data_folder: '/scratch/users/rmth/processed_shhs_data/'
+r-c-shhs:
+  <<: *CDEFAULT
+  data_folder: '/scratch/users/rmth/processed_shhs_data_revised/'
 c-shhs-multimodal:
   <<: *CDEFAULT
   data_folder: '/scratch/users/rmth/processed_shhs_data_multimodal/'
+c-simulated:
+  <<: *CDEFAULT
+  data_folder: '/scratch/users/rmth/simulated_data/'
