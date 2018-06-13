@@ -2,7 +2,6 @@ default: &DEFAULT
   n_classes: 2
   time_steps: 60
   one_output_per_epoch: True
-  flipped_architecture: False
   n_layers: 4
   n_filters: 512
   temporal_kernel_size: 3
@@ -21,6 +20,7 @@ default: &DEFAULT
   regularization: 5e-3
   optimizer: tf.train.AdamOptimizer #doesnt work goes to defualt
   learning_rate: 1e-4
+  noise_layer: False
 old_revised:
   <<: *DEFAULT
   rnn_size: 4
@@ -99,12 +99,6 @@ shallowrr: &BASIS
   rnn_dropout: True
   rnn_dropout_probability: 0.6
   optimizer: tf.train.AdamOptimizer
-small:
-  <<: *BASIS
-  rnn_size: 1
-  n_layers: 3
-  n_filters: 4
-  n_units_dense: 16
 shallowrr-rnn_size4:
   <<: *BASIS
   rnn_size: 4
@@ -183,3 +177,72 @@ revised-shallow:
   rnn_dropout: True
   rnn_dropout_probability: 0.6
   optimizer: tf.train.AdamOptimizer
+revised2-shallow:
+  <<: *DEFAULT
+  rnn_size: 128
+  n_units_dense: 128
+  flipped_architecture: True
+  n_filters: 32
+  n_layers: 3
+  pool_stride: 2
+  temporal_kernel_size: 8
+  pooling_size: 6
+  learning_rate: 1e-4
+  kernel_regularizer_scale: 0.0
+  regularization: 5e-3
+  rnn_dropout: True
+  rnn_dropout_probability: 0.6
+  optimizer: tf.train.AdamOptimizer
+revised-shallow-noise:
+  <<: *DEFAULT
+  rnn_size: 128
+  n_units_dense: 128
+  flipped_architecture: True
+  n_filters: 32
+  n_layers: 3
+  pool_stride: 2
+  temporal_kernel_size: 8
+  pooling_size: 6
+  learning_rate: 1e-4
+  kernel_regularizer_scale: 0.0
+  regularization: 5e-3
+  rnn_dropout: True
+  rnn_dropout_probability: 0.6
+  optimizer: tf.train.AdamOptimizer
+  noise_layer: True
+revised-shallow-small:
+  <<: *DEFAULT
+  rnn_size: 4
+  n_units_dense: 16
+  flipped_architecture: True
+  n_filters: 4
+  n_layers: 3
+  pool_stride: 2
+  temporal_kernel_size: 8
+  pooling_size: 6
+  learning_rate: 1e-4
+  kernel_regularizer_scale: 0.0
+  regularization: 1e-2
+  rnn_dropout: True
+  rnn_dropout_probability: 0.6
+  optimizer: tf.train.AdamOptimizer
+  noise_layer: True
+  rnn_layer: False
+revised-shallow-noise2:
+  <<: *DEFAULT
+  rnn_size: 128
+  n_units_dense: 256
+  flipped_architecture: True
+  n_filters: 16
+  n_layers: 4
+  pool_stride: 2
+  temporal_kernel_size: 8
+  pooling_size: 4
+  learning_rate: 1e-4
+  kernel_regularizer_scale: 0.0
+  regularization: 5e-3
+  rnn_dropout: True
+  rnn_dropout_probability: 0.6
+  optimizer: tf.train.AdamOptimizer
+  noise_layer: True
+
