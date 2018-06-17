@@ -57,7 +57,7 @@ experimental_ids = np.asarray(experimental_ids)
 exps = np.zeros([n_exp, 10])
 exps_nsrrid = np.zeros([n_exp, 1])
 for counter, id in enumerate(experimental_ids):
-    a = red[ df['nsrrid'] == id].as_matrix()
+    a = red[df['nsrrid'] == id].as_matrix()
     a[np.isnan(a)] = 0
     exps[counter,:] = a[0,1:]
     exps_nsrrid[counter] = id
@@ -187,3 +187,40 @@ matched_control['conIDs'] = np.reshape(con_id_matched, [-1])
 matched_control['expIDs'] = np.reshape(exp_id_matched, [-1])
 matched_control.to_csv('./matched_controls.csv')
 
+classification_outcomes = {'200813': -2,
+                           '200907': -2,
+                          '201199': -1,
+                          '201207': -1,
+                          '201261': 0,
+                          '201293': 0,
+                          '201294': 1,
+                          '201298': 1}
+labels = df[df['nsrrid'] == int(id)].columns.values
+risk_values = {}
+key_names = {-2: 'fp', -1: 'tp', 0:'tn', 1: 'fn'}
+for key in key_names.values():
+    risk_values[key] = []
+
+for id, v in classification_outcomes.items():
+    a = df[df['nsrrid'] == int(id)].as_matrix()
+    risk_values[key_names[v]].append(a)
+
+stats = {}
+for key, value in risk_values.items():
+    X = np.squeeze(np.asarray(value))
+    stats[key] = (np.round(np.nanmean(X, axis=0),2), np.round(np.nanstd(X,axis=0),2))
+
+table = []
+for key, value in stats.items():
+    table.append(value)
+table = np.asarray(table)
+
+str = 'feat\t\t'
+for k,v in key_names.items():
+    str += '' + v + '\t\t\t\t'
+print(str)
+for feat in np.arange(1, table.shape[2]):
+    str = labels[feat][:5] + '\t'
+    for outcome in range(4):
+        str += '{:>5} ({:>5})\t'.format(table[outcome, 0, feat], table[outcome, 1, feat])
+    print(str)
