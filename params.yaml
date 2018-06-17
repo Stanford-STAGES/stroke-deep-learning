@@ -228,6 +228,24 @@ revised-shallow-small:
   optimizer: tf.train.AdamOptimizer
   noise_layer: True
   rnn_layer: False
+revised-shallow-n2rem:
+  <<: *DEFAULT
+  time_steps: 1
+  rnn_size: 16
+  n_units_dense: 64
+  flipped_architecture: True
+  n_filters: 16
+  n_layers: 2
+  pool_stride: 2
+  temporal_kernel_size: 8
+  pooling_size: 6
+  learning_rate: 1e-4
+  kernel_regularizer_scale: 0.0
+  regularization: 5e-3
+  rnn_dropout: True
+  rnn_dropout_probability: 0.6
+  optimizer: tf.train.AdamOptimizer
+  noise_layer: True
 revised-shallow-noise2:
   <<: *DEFAULT
   rnn_size: 128
@@ -245,4 +263,3 @@ revised-shallow-noise2:
   rnn_dropout_probability: 0.6
   optimizer: tf.train.AdamOptimizer
   noise_layer: True
-
