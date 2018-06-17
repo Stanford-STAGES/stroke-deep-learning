@@ -70,16 +70,38 @@ for counter, id in enumerate(all_control_ids):
     cons[counter,:] = a[0,1:]
     cons_nsrrid[counter] = id
 
-exps_norm = normalize(exps, axis = 0)
-cons_norm = normalize(cons, axis = 0)
 
-def distance(a,b):
-    return np.linalg.norm(a-b)
+exps_norm = np.empty(shape=exps.shape)
+cons_norm = np.empty(shape=cons.shape)
+X = np.concatenate((exps, cons), axis=0)
+mu = np.mean(X, axis=0)
+sigma = np.std(X, axis=0)
+for i in range(exps.shape[1]):
+    exps_norm[:, i] = (exps[:, i] - mu[i])/sigma[i]
+    cons_norm[:, i] = (cons[:, i] - mu[i])/sigma[i]
+
+
+#exps_norm = normalize(exps, axis=0)
+#cons_norm = normalize(cons, axis=0)
+
+def distance(a, b, importance, direction, delta=0):
+    diff = (a*importance-b*importance)
+    mod_diff = diff * (1 + np.sign(diff) * delta * direction)
+    d = np.linalg.norm(mod_diff)
+    return d
+
+#importance = np.asarray([1000, 1, 1, 1, 1, 1, 1, 1 , 1, 1])
+importance = np.asarray([1, 1, 1, 1, 1, 1, 1, 1, 1, 1,])
+direction  = np.asarray([1, 1, 1, 1, 1, 1, 1, 0, 1, 1])
+importance = importance / np.sum(importance)
 
 dist = np.zeros([n_exp, n_con])
 for e in range(n_exp):
     for c in range(n_con):
-        dist[e,c] = distance(exps_norm[e,:],cons_norm[c,:])
+        dist[e, c] = distance(exps_norm[e, :],
+                              cons_norm[c, :],
+                              importance,
+                              direction)
 
 choices = np.argmin(dist, axis = 1)
 master_dist = dist.copy()
@@ -129,14 +151,19 @@ con_stds = np.std(cons[cidx], axis = 0)
 
 labels = red.columns.values
 
-for i in range(exp_mus.shape[0]):
-    print('Feature {}:'.format(labels[i+1]))
-    print('    exp mu: {}'.format(exp_mus[i]))
-    print('    con mu: {}'.format(con_mus[i]))
-    print('    exp std: {}'.format(exp_stds[i]))
-    print('    con std: {}'.format(con_stds[i]))
+from scipy.stats import ttest_ind
 
-controls = all_control_ids.sample(n_exp * 6,
+print('Feat\texp mu\t exp std \tcon mu \t con std \tt \t\t p')
+for i in range(exp_mus.shape[0]):
+    a = exps[:,i]
+    b = cons[cidx, i]
+    t, p = ttest_ind(a,b)
+    print('{}\t{:2.2f}\t ({:2.1f})\t\t{:2.2f}\t ({:2.1f})\t\t{:2.2f}\t ({:2.2f})'.format(labels[i+1][:5],
+                                                 exp_mus[i], exp_stds[i],
+                                                 con_mus[i], con_stds[i],
+                                                 t, p))
+
+controls = all_control_ids.sample(n_exp * 10,
                                   replace=False,
                                   weights=None,
                                   random_state=42)
