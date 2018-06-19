@@ -125,7 +125,7 @@ class CRNN:
             X = tf.convert_to_tensor(xlist)
             X = tf.transpose(X, [1,2,0,3,4])
             if self.training and self.p.noise_layer:
-                X = self.__gaussian_noise_layer(input=X, std=0.2)
+                X = self.__gaussian_noise_layer(input=X, std=0.1)
             if self.verbose_shapes: print('X: {}'.format(X.shape))
 
         extracted_features = self.__network(input=X, reuse=reuse)
