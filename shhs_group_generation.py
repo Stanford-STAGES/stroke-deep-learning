@@ -158,10 +158,100 @@ for i in range(exp_mus.shape[0]):
     a = exps[:,i]
     b = cons[cidx, i]
     t, p = ttest_ind(a,b)
-    print('{}\t{:2.2f}\t ({:2.1f})\t\t{:2.2f}\t ({:2.1f})\t\t{:2.2f}\t ({:2.2f})'.format(labels[i+1][:5],
+    print('{}\t{:2.2f}\t ({:2.2f})\t\t{:2.2f}\t ({:2.2f})\t\t{:2.2f}\t ({:2.2f})'.format(labels[i+1][:5],
                                                  exp_mus[i], exp_stds[i],
                                                  con_mus[i], con_stds[i],
                                                  t, p))
+
+'''
+Feat	exp mu	 exp std 	    con mu 	 con std 	    t 		 p
+age_s	73.88	 (7.84)		    72.93	 (8.06)		    0.73	 (0.47)
+bmi_s	27.65	 (4.35)		    27.50	 (4.34)		    0.21	 (0.83)
+Alcoh	3.34	 (6.76)		    3.00	 (5.85)		    0.33	 (0.74)
+CgPkY	24.78	 (30.39)		20.94	 (27.85)		0.81	 (0.42)
+DiasB	68.37	 (13.85)		70.39	 (13.70)		-0.90	 (0.37)
+SystB	132.39	 (24.27)		130.95	 (24.92)		0.36	 (0.72)
+ahi_a	17.24	 (22.37)		15.70	 (19.20)		0.45	 (0.65)
+gende	1.50	 (0.50)		    1.51	 (0.50)		    -0.16	 (0.87)
+afibp	0.01	 (0.11)		    0.01	 (0.11)		    0.00	 (1.00)
+prev_	0.54	 (1.78)		    0.45	 (1.36)		    0.36	 (0.72)
+'''
+
+'''
+Logistic regression baseline
+'''
+
+from sklearn.linear_model import LogisticRegression
+from sklearn.model_selection import StratifiedKFold
+from sklearn.metrics import classification_report
+K = 76
+kf = StratifiedKFold(n_splits=K)
+logreg = LogisticRegression()
+X = np.empty((2*76,10))
+y = np.zeros((2*76,1))
+X[:76, :] = exps
+y[:76, :] = 1
+X[76:, :] = cons[cidx,:]
+y[76:, :] = 0
+
+y_pred = []
+y_true =[]
+for train_index, test_index in kf.split(X,y):
+    logreg.fit(X[train_index,:],y[train_index,:])
+    y_pred_fold = logreg.predict(X[test_index,:])
+    y_pred.append(y_pred_fold)
+    y_true.append(y[test_index,:])
+y_pred = np.reshape(np.asarray(y_pred), [-1])
+y_true = np.reshape(np.asarray(y_true), [-1])
+print(classification_report(y_true = y_true,
+                            y_pred = y_pred))
+'''
+             precision    recall  f1-score   support
+        0.0       0.49      0.51      0.50        76
+        1.0       0.49      0.46      0.47        76
+avg / total       0.49      0.49      0.49       152
+'''
+
+
+
+n = 76
+K = n
+ridx = np.random.choice(np.arange(0, cons.shape[0]), size=n, replace=False)
+kf = StratifiedKFold(n_splits=K)
+logreg = LogisticRegression()
+X_easy = np.empty((2*n,10))
+y_easy = np.zeros((2*n,1))
+X_easy[:76, :] = exps
+y_easy[:76, :] = 1
+X_easy[76:, :] = cons[ridx, :]
+y_easy[76:, :] = 0
+
+y_pred = np.asarray([])
+y_true = np.asarray([])
+for train_index, test_index in kf.split(X_easy, y_easy):
+    logreg.fit(X_easy[train_index,:],y_easy[train_index,:])
+    y_pred_fold = logreg.predict(X_easy[test_index, :])
+    y_pred = np.concatenate( [y_pred, y_pred_fold], axis=0)
+    y_true = np.concatenate( [y_true, np.squeeze(y_easy[test_index, :])], axis=0)
+
+print(classification_report(y_true=y_true,
+                            y_pred=y_pred))
+
+'''
+             precision    recall  f1-score   support
+        0.0       0.77      0.75      0.76        76
+        1.0       0.76      0.78      0.77        76
+avg / total       0.76      0.76      0.76       152
+'''
+
+
+'''
+Export
+'''
+
+
+
+
 
 controls = all_control_ids.sample(n_exp * 10,
                                   replace=False,
@@ -187,15 +277,17 @@ matched_control['conIDs'] = np.reshape(con_id_matched, [-1])
 matched_control['expIDs'] = np.reshape(exp_id_matched, [-1])
 matched_control.to_csv('./matched_controls.csv')
 
-classification_outcomes = {'200813': -2,
-                           '200907': -2,
-                          '201199': -1,
-                          '201207': -1,
-                          '201261': 0,
-                          '201293': 0,
-                          '201294': 1,
-                          '201298': 1}
-labels = df[df['nsrrid'] == int(id)].columns.values
+with open('cv_id_outcomes.pkl', 'rb') as f:
+    classification_outcomes_cv = pickle.load(f, encoding='latin1')
+
+classification_outcomes = {}
+for k1,v in classification_outcomes_cv[0].items():
+    for k2,e in v.items():
+        if k2[-2:] == '.0':
+            k2 = k2[:-2]
+        classification_outcomes[int(k2[6:])] = e
+
+labels = df[df['nsrrid'] == int('200965')].columns.values
 risk_values = {}
 key_names = {-2: 'fp', -1: 'tp', 0:'tn', 1: 'fn'}
 for key in key_names.values():
@@ -208,16 +300,20 @@ for id, v in classification_outcomes.items():
 stats = {}
 for key, value in risk_values.items():
     X = np.squeeze(np.asarray(value))
-    stats[key] = (np.round(np.nanmean(X, axis=0),2), np.round(np.nanstd(X,axis=0),2))
+    stats[key] = (np.round(np.nanmean(X, axis=0),2),
+                  np.round(np.nanstd(X, axis=0),2),
+                  X.shape[0])
 
 table = []
+ns = {}
 for key, value in stats.items():
-    table.append(value)
+    table.append(value[0:2])
+    ns[key] = value[-1]
 table = np.asarray(table)
 
 str = 'feat\t\t'
 for k,v in key_names.items():
-    str += '' + v + '\t\t\t\t'
+    str += '' + v + '(n={})'.format(ns[v]) + '\t\t'
 print(str)
 for feat in np.arange(1, table.shape[2]):
     str = labels[feat][:5] + '\t'
