@@ -7,6 +7,7 @@ from os.path import exists
 from shutil import rmtree
 from os import mkdir
 from numpy.random import shuffle
+import sys
 
 class DataHandler(object):
     @classmethod
@@ -40,6 +41,8 @@ class DataHandler(object):
                 print('Something is wrong with {}'.format(id))
 
         if cross_validate:
+            #print('ERROR IN CV FOLD GENERATION, FIX. EXITING')
+            #sys.exit()
             if model_memory and exists(config.eparams.ckptdir):
                 print('Restoring partitions for: {}'.format(config.eparams.ckptdir))
                 with open(config.eparams.ckptdir + 'partitions.pkl', 'rb') as f:
@@ -53,17 +56,29 @@ class DataHandler(object):
                 exp = [k for k,v in cls.labels.items() if v == 1]
                 shuffle(con)
                 shuffle(exp)
-                n_con_per_split = len(con)//n_folds
-                n_exp_per_split = len(exp)//n_folds
-                n_con_extra = len(con) % n_folds
-                n_exp_extra = len(exp) % n_folds
+                #n_con_per_split = len(con)//n_folds
+                #n_exp_per_split = len(exp)//n_folds
+                #n_con_extra = len(con) % n_folds
+                #n_exp_extra = len(exp) % n_folds
+
+                fold_idx_exp = np.tile(np.arange(0,n_folds), int(np.ceil(len(exp)/float(n_folds))))
+                fold_idx_exp = fold_idx_exp[:len(exp)]
+                fold_idx_con = np.tile(np.arange(0,n_folds), int(np.ceil(len(con)/float(n_folds))))
+                fold_idx_con = fold_idx_con[:len(con)]
 
                 fold_ids = []
                 for i in range(n_folds):
-                    # Value of boolean expression adds one for the "surplus" so all IDs are used, but the last splits are smaller
-                    con_ids = con[i*n_con_per_split:i*n_con_per_split+n_con_per_split + (i < n_con_extra)]
-                    exp_ids = exp[i*n_exp_per_split:i*n_exp_per_split+n_exp_per_split + (i < n_exp_extra)]
+                    con_ids = np.asarray(con)[fold_idx_con == i].tolist()
+                    exp_ids = np.asarray(exp)[fold_idx_exp == i].tolist()
                     fold_ids.append(con_ids+exp_ids)
+
+                #fold_ids = []
+                #for i in range(n_folds):
+                    # Value of boolean expression adds one for the "surplus" so all IDs are used, but the last splits are smaller
+
+                #    con_ids = con[i*n_con_per_split + (i-1 < n_con_extra):i*n_con_per_split+n_con_per_split + (i < n_con_extra)]
+                #    exp_ids = exp[i*n_exp_per_split + (i-1 < n_exp_extra):i*n_exp_per_split+n_exp_per_split + (i < n_exp_extra)]
+                #    fold_ids.append(con_ids+exp_ids)
 
 
                 division = []
