@@ -1,4 +1,6 @@
 # stroke-deep-learning
+The entire project was restructured to be more logically divided into folders, but only very little work was done to ensure that updated relative paths reflected this change (see the notebook on preprocessing for how it can be done). The training could not be tested due to lack of access to the SHHS data, so instead the library is presented as it was working in the spring of 2018 with no changes despite not working with the restructure. The module loading is shown in the preprocessing notebook, and the library was developed using tensorflow 1.8.0 and python 2.7 due to the availability of the newest tensorflow only for the old Python on Sherlock.
+
 * /bash contains examples of the .sh scripts for running either preprocessing, training or inference using sherlock.
 * /legacy are older files that were stored for easier access in case some old snippets were need, can be ignored.
 * /notebooks contains some Jupyter notebooks that (at some point) could run the preprocessing, the training of both networks and do the evaluation, along with doing the interpretation tool. as of Mon Oct 15 only the pre-processing of files has been tested, and only on a single EDF, because the other SHHS files were removed from Sherlock.
