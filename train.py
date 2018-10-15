@@ -74,8 +74,8 @@ if __name__ == "__main__":
         tolerance = 1e-3
         early_stop_criterion = False
         iteration = 0
-        max_steps = 1e4
-        train_steps = 100
+        max_steps = 2e4 #was 1e4
+        train_steps = 100 #was 100
         eval_steps = 500
         min_iterations = 5
         max_iterations = max_steps // train_steps
@@ -106,7 +106,7 @@ if __name__ == "__main__":
             if iteration < min_iterations:
                 continue
                 
-            early_stop_criterion = (smoothed_loss_values[1]-smoothed_loss_values[0]) > -tolerance
+            early_stop_criterion = (smoothed_loss_values[0]-smoothed_loss_values[1]) < tolerance
             if early_stop_criterion:
                 patience -= 1
                 if patience == 0:
