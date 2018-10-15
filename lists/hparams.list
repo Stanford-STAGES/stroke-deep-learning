@@ -1,0 +1,8 @@
+--config c-shhs-multimodal --experiment cluster --model default
+--config c-shhs --experiment cluster --model default
+--config c-shhs --experiment cluster --model default --hparam dense_layer=False
+--config c-shhs --experiment cluster --model default --hparam n_filters=256
+--config c-shhs --experiment cluster --model default --hparam rnn_size=16
+--config c-shhs --experiment cluster --model default --hparam rnn_size=8
+--config c-shhs --experiment cluster --model default --hparam regularization=1e-4
+--config c-shhs --experiment cluster --model default --hparam n_units_dense=64

@@ -1,0 +1,1 @@
+--config c-shhs --experiment cluster --model revised-shallow --cross_validate 1

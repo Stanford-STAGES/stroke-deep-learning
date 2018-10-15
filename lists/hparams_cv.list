@@ -1,0 +1,4 @@
+--config c-shhs --experiment cluster --model revised --cross_validate 2
+--config c-shhs --experiment cluster --model revised --cross_validate 3
+--config c-shhs --experiment cluster --model revised --cross_validate 4
+--config c-shhs --experiment cluster --model revised --cross_validate 5

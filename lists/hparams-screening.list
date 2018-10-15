@@ -1,0 +1,37 @@
+--config c-shhs-multimodal --experiment cluster --model default
+--config c-shhs --experiment cluster --model default
+--config c-shhs --experiment cluster --model default --hparam rnn_layer=False
+--config c-shhs --experiment cluster --model default --hparam dense_layer=False
+--config c-shhs --experiment cluster --model default --hparam optimizer=tf.train.GradientDescentOptimizer
+--config c-shhs --experiment cluster --model default --hparam optimizer=tf.train.RMSPropOptimizer
+--config c-shhs --experiment cluster --model default --hparam learning_rate=1e-1
+--config c-shhs --experiment cluster --model default --hparam learning_rate=1e-2
+--config c-shhs --experiment cluster --model default --hparam learning_rate=1e-3
+--config c-shhs --experiment cluster --model default --hparam learning_rate=1e-4
+--config c-shhs --experiment cluster --model default --hparam n_layers=6
+--config c-shhs --experiment cluster --model default --hparam n_layers=4
+--config c-shhs --experiment cluster --model default --hparam n_layers=2
+--config c-shhs --experiment cluster --model default --hparam n_filters=256
+--config c-shhs --experiment cluster --model default --hparam n_filters=512
+--config c-shhs --experiment cluster --model default --hparam n_filters=1024
+--config c-shhs --experiment cluster --model default --hparam n_filters=2048
+--config c-shhs --experiment cluster --model default --hparam rnn_size=128
+--config c-shhs --experiment cluster --model default --hparam rnn_size=64
+--config c-shhs --experiment cluster --model default --hparam rnn_size=32
+--config c-shhs --experiment cluster --model default --hparam rnn_size=16
+--config c-shhs --experiment cluster --model default --hparam regularization=1e-0
+--config c-shhs --experiment cluster --model default --hparam regularization=1e-1
+--config c-shhs --experiment cluster --model default --hparam regularization=1e-2
+--config c-shhs --experiment cluster --model default --hparam regularization=1e-3
+--config c-shhs --experiment cluster --model default --hparam regularization=1e-4
+--config c-shhs --experiment cluster --model default --hparam time_steps=15
+--config c-shhs --experiment cluster --model default --hparam time_steps=30
+--config c-shhs --experiment cluster --model default --hparam time_steps=60
+--config c-shhs --experiment cluster --model default --hparam time_steps=120
+--config c-shhs --experiment cluster --model default --hparam temporal_kernel_size=2
+--config c-shhs --experiment cluster --model default --hparam temporal_kernel_size=4
+--config c-shhs --experiment cluster --model default --hparam temporal_kernel_size=8
+--config c-shhs --experiment cluster --model default --hparam temporal_kernel_size=16
+--config c-shhs --experiment cluster --model default --hparam n_units_dense=32
+--config c-shhs --experiment cluster --model default --hparam n_units_dense=64
+--config c-shhs --experiment cluster --model default --hparam n_units_dense=128

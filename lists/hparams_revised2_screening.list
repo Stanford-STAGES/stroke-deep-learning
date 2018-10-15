@@ -1,0 +1,26 @@
+--config c-shhs --experiment cluster --model revised2
+--config c-shhs --experiment cluster --model revised2 --hparam n_filters=1
+--config c-shhs --experiment cluster --model revised2 --hparam n_filters=4
+--config c-shhs --experiment cluster --model revised2 --hparam n_filters=8
+--config c-shhs --experiment cluster --model revised2 --hparam n_filters=16
+--config c-shhs --experiment cluster --model revised2 --hparam n_filters=32
+--config c-shhs --experiment cluster --model revised2 --hparam rnn_size=2
+--config c-shhs --experiment cluster --model revised2 --hparam rnn_size=16
+--config c-shhs --experiment cluster --model revised2 --hparam rnn_size=64
+--config c-shhs --experiment cluster --model revised2 --hparam n_units_dense=8
+--config c-shhs --experiment cluster --model revised2 --hparam n_units_dense=512
+--config c-shhs --experiment cluster --model revised2 --hparam regularization=1e-4
+--config c-shhs --experiment cluster --model revised2 --hparam regularization=5e-4
+--config c-shhs --experiment cluster --model revised2 --hparam regularization=1e-3
+--config c-shhs --experiment cluster --model revised2 --hparam regularization=5e-3
+--config c-shhs --experiment cluster --model revised2 --hparam regularization=1e-2
+--config c-shhs --experiment cluster --model revised2 --hparam rnn_dropout=False
+--config c-shhs --experiment cluster --model revised2 --hparam rnn_dropout_probability=0.1
+--config c-shhs --experiment cluster --model revised2 --hparam rnn_dropout_probability=0.2
+--config c-shhs --experiment cluster --model revised2 --hparam rnn_dropout_probability=0.4
+--config c-shhs --experiment cluster --model revised2 --hparam rnn_dropout_probability=0.6
+--config c-shhs --experiment cluster --model revised2 --hparam rnn_dropout_probability=0.8
+--config c-shhs --experiment cluster --model revised2 --hparam dropout_pct=0.1
+--config c-shhs --experiment cluster --model revised2 --hparam dropout_pct=0.2
+--config c-shhs --experiment cluster --model revised2 --hparam dropout_pct=0.4
+--config c-shhs --experiment cluster --model revised2 --hparam dropout_pct=0.6

@@ -1,0 +1,8 @@
+--config c-shhs --experiment cluster --model revised-shallow --cross_validate 2
+--config c-shhs --experiment cluster --model revised-shallow --cross_validate 3
+--config c-shhs --experiment cluster --model revised-shallow --cross_validate 4
+--config c-shhs --experiment cluster --model revised-shallow --cross_validate 5
+--config c-shhs --experiment cluster --model revised-shallow --cross_validate 6
+--config c-shhs --experiment cluster --model revised-shallow --cross_validate 7
+--config c-shhs --experiment cluster --model revised-shallow --cross_validate 8
+--config c-shhs --experiment cluster --model revised-shallow --cross_validate 9
