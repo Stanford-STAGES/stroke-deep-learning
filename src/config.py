@@ -24,7 +24,7 @@ class Config():
         self.m = model_profile
         self.o = overrides
 
-    def get_configs(self, matched = False, cross_validate = None):
+    def get_configs(self, matched=False, cross_validate=None):
         #hparam = new_hparam('/home/users/rmth/stroke-deep-learning/config.yaml', self.c)
         hparam = new_hparam('config.yaml', self.c)
         if matched:
